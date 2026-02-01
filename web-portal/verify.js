@@ -5,6 +5,9 @@ const receiptId = urlParams.get('id');
 // Google Apps Script Web App URL (replace after deployment)
 const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec";
 
+// Google Apps Script Webhook URL for fetching sheet data
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec";
+
 async function showPaymentDashboard() {
     const receiptDetails = document.getElementById('receiptDetails');
     
@@ -21,15 +24,61 @@ async function showPaymentDashboard() {
     receiptDetails.innerHTML = '<p>Loading payment history...</p>';
 
     try {
-        const currentUser = getCurrentUser();
-        const userReceipts = getUserReceipts(currentUser);
-
-        if (!userReceipts || userReceipts.length === 0) {
-            receiptDetails.innerHTML = '<p>No payment history found.</p>';
+        // Try to fetch from Google Sheets first
+        const sheetData = await fetchGoogleSheetData();
+        
+        if (sheetData && sheetData.length > 0) {
+            // Display all payments from Google Sheets
+            receiptDetails.innerHTML = `
+                <h2>💳 Payment History</h2>
+                <div style="margin-top: 20px;">
+                    ${sheetData.map(row => `
+                        <div class="receipt-card" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                            <h3 style="margin-top: 0; color: #333;">${row.Name}</h3>
+                            <div class="receipt-detail">
+                                <span class="label">Total Amount:</span>
+                                <span class="value">${row.Amount}</span>
+                            </div>
+                            <div class="receipt-detail">
+                                <span class="label">Amount Due:</span>
+                                <span class="value">${row['Due Amount']}</span>
+                            </div>
+                            <div class="receipt-detail">
+                                <span class="label">Amount Paid:</span>
+                                <span class="value" style="color: #00b050; font-weight: bold;">${row.Amount_Paid || 'N/A'}</span>
+                            </div>
+                            <div class="receipt-detail">
+                                <span class="label">Payment Status:</span>
+                                <span class="value" style="font-weight: bold; font-size: 16px; color: ${row.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${row.Payment_Status || 'N/A'}</span>
+                            </div>
+                            <div class="receipt-detail">
+                                <span class="label">Date:</span>
+                                <span class="value">${row.Date}</span>
+                            </div>
+                            <div class="receipt-detail">
+                                <span class="label">Description:</span>
+                                <span class="value">${row.Description}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
             return;
         }
+    } catch (error) {
+        console.warn('Could not fetch from Google Sheets:', error);
+    }
 
-        // Load and display all receipts
+    // Fallback: Load from local receipts
+    const currentUser = getCurrentUser();
+    const userReceipts = getUserReceipts(currentUser);
+
+    if (!userReceipts || userReceipts.length === 0) {
+        receiptDetails.innerHTML = '<p>No payment history found.</p>';
+        return;
+    }
+
+    try {
         const receiptsList = [];
         for (const receiptId of userReceipts) {
             const receiptData = await loadReceiptData(receiptId);
@@ -43,9 +92,8 @@ async function showPaymentDashboard() {
             return;
         }
 
-        // Display payment history
         receiptDetails.innerHTML = `
-            <h2>Payment History</h2>
+            <h2>💳 Payment History</h2>
             <div style="margin-top: 20px;">
                 ${receiptsList.map(receipt => `
                     <div class="receipt-card" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
@@ -151,6 +199,19 @@ async function loadReceiptData(receiptId) {
     }
 
     return null;
+}
+
+async function fetchGoogleSheetData() {
+    try {
+        const response = await fetch(GOOGLE_SHEET_URL);
+        if (response.ok) {
+            const data = await response.json();
+            return data.rows || [];
+        }
+    } catch (error) {
+        console.warn('Google Sheets fetch failed:', error);
+        return null;
+    }
 }
 
 // Load payment dashboard on page load

@@ -1,18 +1,48 @@
+// Google Apps Script Webhook URL for fetching sheet data
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec";
+
 async function loadUserReceipts(email) {
     const users = getUsers();
     const receiptsList = document.getElementById('receiptsList');
     
-    if (!users[email] || users[email].receipts.length === 0) {
-        receiptsList.innerHTML = '<p>No receipts found. Scan a QR code to add your first receipt.</p>';
-        return;
+    receiptsList.innerHTML = '<p>Loading payment history...</p>';
+
+    try {
+        // Try to fetch from Google Sheets first
+        const sheetData = await fetchGoogleSheetData();
+        
+        if (sheetData && sheetData.length > 0) {
+            // Filter data for current user if available
+            const userData = sheetData.map(row => ({
+                id: row['Receipt No'] || 'N/A',
+                data: row
+            }));
+
+            receiptsList.innerHTML = userData.map(receipt => `
+                <div class="receipt-card">
+                    <h3>${receipt.data.Name}</h3>
+                    <p><strong>Total Amount:</strong> ${receipt.data.Amount}</p>
+                    <p><strong>Amount Due:</strong> ${receipt.data['Due Amount']}</p>
+                    <p><strong>Amount Paid:</strong> <span style="color: #00b050; font-weight: bold;">${receipt.data.Amount_Paid || 'N/A'}</span></p>
+                    <p><strong>Payment Status:</strong> <span style="color: ${receipt.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}; font-weight: bold; font-size: 16px;">${receipt.data.Payment_Status || 'N/A'}</span></p>
+                    <p style="font-size: 12px; color: #999;">Date: ${receipt.data.Date}</p>
+                </div>
+            `).join('');
+            return;
+        }
+    } catch (error) {
+        console.warn('Could not fetch from Google Sheets:', error);
     }
 
-    receiptsList.innerHTML = '<p>Loading receipts...</p>';
+    // Fallback: Load from local receipts
+    if (!users[email] || users[email].receipts.length === 0) {
+        receiptsList.innerHTML = '<p>No payments found.</p>';
+        return;
+    }
 
     try {
         const receipts = [];
         for (const receiptId of users[email].receipts) {
-            // Try to load from GitHub or local storage
             const receiptData = await loadReceiptData(receiptId);
             if (receiptData) {
                 receipts.push(receiptData);
@@ -20,7 +50,7 @@ async function loadUserReceipts(email) {
         }
 
         if (receipts.length === 0) {
-            receiptsList.innerHTML = '<p>No receipts found.</p>';
+            receiptsList.innerHTML = '<p>No payments found.</p>';
             return;
         }
 
@@ -36,8 +66,21 @@ async function loadUserReceipts(email) {
         `).join('');
 
     } catch (error) {
-        receiptsList.innerHTML = '<p>Error loading receipts.</p>';
+        receiptsList.innerHTML = '<p>Error loading payments.</p>';
         console.error(error);
+    }
+}
+
+async function fetchGoogleSheetData() {
+    try {
+        const response = await fetch(GOOGLE_SHEET_URL);
+        if (response.ok) {
+            const data = await response.json();
+            return data.rows || [];
+        }
+    } catch (error) {
+        console.warn('Google Sheets fetch failed:', error);
+        return null;
     }
 }
 
