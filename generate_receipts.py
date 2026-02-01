@@ -24,7 +24,7 @@ def generate_receipt_hash(receipt_data):
 def generate_qr_and_barcode(receipt_id, receipt_data, output_dir):
     """Generate QR code and barcode for the receipt"""
     # Create verification URL (will be hosted on GitHub Pages)
-    verify_url = f"https://.github.io/payment-receipts/verify.html?id={receipt_id}"
+    verify_url = f"https://Sir0Exclusive.github.io/payment-receipts/verify.html?id={receipt_id}"
     
     # Generate QR code
     qr = qrcode.QRCode(version=1, box_size=10, border=2)

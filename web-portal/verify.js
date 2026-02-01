@@ -112,7 +112,7 @@ async function loadReceiptData(receiptId) {
     }
 
     try {
-        const response = await fetch(`https://.github.io/payment-receipts/data/${receiptId}.json`);
+        const response = await fetch(`https://Sir0Exclusive.github.io/payment-receipts/data/${receiptId}.json`);
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem(`receipt_${receiptId}`, JSON.stringify(data));
