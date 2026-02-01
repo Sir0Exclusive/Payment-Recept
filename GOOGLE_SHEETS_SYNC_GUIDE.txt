@@ -139,6 +139,15 @@ A: 1. Run sync_and_export.py
 Q: Can I edit Excel directly?
 A: Yes! Just run generate_receipts.py after editing to update PDFs.
 
+Q: Auto-sync shows 401 errors?
+A: Your Google Apps Script web app is not public.
+  Fix:
+  1. Open your Apps Script project
+  2. Deploy → Manage deployments → Edit
+  3. Execute as: Me
+  4. Who has access: Anyone
+  5. Save and update the URL if it changes
+
 
 SUMMARY
 ───────
@@ -156,8 +165,7 @@ CLOUD:
   ✓ GitHub Pages for web portal
 
 SYNC:
-  ✓ Google Sheets → Excel → Receipts → Web Portal
-  ✓ One-way flow (you control the data)
+  ✓ Bidirectional when online (Google Sheets ↔ Excel)
   ✓ Offline backup in Excel
   ✓ Online dashboard for recipients
 

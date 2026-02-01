@@ -14,7 +14,7 @@ import json
 
 # Configuration
 EXCEL_FILE = "recipients_data.xlsx"
-GOOGLE_SHEETS_WEBHOOK = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec"
+GOOGLE_SHEETS_WEBHOOK = "https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec"
 SYNC_INTERVAL = 30  # Check every 30 seconds
 LOG_FILE = "sync_log.txt"
 
@@ -39,10 +39,18 @@ def fetch_google_sheets_data():
     """Fetch data from Google Sheets"""
     try:
         response = requests.get(GOOGLE_SHEETS_WEBHOOK, timeout=10)
-        if response.status_code == 200:
+        if response.status_code != 200:
+            log_sync(f"Google Sheets GET failed (status {response.status_code})")
+            return None, None
+
+        try:
             data = response.json()
-            if isinstance(data, dict) and 'rows' in data:
-                return data['rows'], data.get('headers', [])
+        except ValueError:
+            log_sync("Google Sheets returned non-JSON response (check web app access)")
+            return None, None
+
+        if isinstance(data, dict) and 'rows' in data:
+            return data['rows'], data.get('headers', [])
         return None, None
     except Exception as e:
         log_sync(f"Error fetching from Google Sheets: {str(e)}")
@@ -87,19 +95,37 @@ def excel_to_google_sheets(records):
     """Send Excel data to Google Sheets"""
     if not records:
         return False
-    
+
+    success_count = 0
+    failed_count = 0
+
     try:
         for record in records:
+            email_value = record.get("Email") or record.get("Recipient Email") or record.get("Name", "")
             payload = {
-                "email": record.get("Name", ""),
-                "receiptId": record.get("Receipt No", "")
+                "receiptId": record.get("Receipt No", ""),
+                "email": email_value,
+                "Name": record.get("Name", ""),
+                "Amount": record.get("Amount", ""),
+                "Due Amount": record.get("Due Amount", ""),
+                "Date": record.get("Date", ""),
+                "Description": record.get("Description", ""),
+                "Payment_Status": record.get("Payment_Status", ""),
+                "Amount_Paid": record.get("Amount_Paid", "")
             }
             response = requests.post(GOOGLE_SHEETS_WEBHOOK, json=payload, timeout=10)
-            if response.status_code != 200:
+            if response.status_code == 200:
+                success_count += 1
+            else:
+                failed_count += 1
                 log_sync(f"Warning: Failed to sync {payload['email']} (status {response.status_code})")
-        
-        log_sync(f"✓ Synced {len(records)} records to Google Sheets")
-        return True
+
+        if success_count:
+            log_sync(f"✓ Synced {success_count} records to Google Sheets")
+        if failed_count and success_count == 0:
+            log_sync("✗ Sync failed - check Google Apps Script web app access (must be 'Anyone')")
+
+        return success_count > 0
     except Exception as e:
         log_sync(f"Error syncing to Google Sheets: {str(e)}")
         return False
@@ -158,7 +184,7 @@ def sync_cycle():
                 excel_to_google_sheets(merged)
         else:
             # Google Sheets is empty or unreachable, push Excel data
-            log_sync(f"Pushing Excel data to Google Sheets...")
+            log_sync("Pushing Excel data to Google Sheets...")
             excel_to_google_sheets(excel_data)
     
     except Exception as e:

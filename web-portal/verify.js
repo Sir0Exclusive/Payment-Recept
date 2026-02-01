@@ -3,10 +3,10 @@ const urlParams = new URLSearchParams(window.location.search);
 const receiptId = urlParams.get('id');
 
 // Google Apps Script Web App URL (replace after deployment)
-const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec";
+const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec";
 
 // Google Apps Script Webhook URL for fetching sheet data
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec";
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec";
 
 async function showPaymentDashboard() {
     const receiptDetails = document.getElementById('receiptDetails');

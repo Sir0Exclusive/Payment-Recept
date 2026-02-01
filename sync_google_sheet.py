@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 
 # Google Apps Script Web App URL (doGet returns JSON)
-APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec"
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec"
 
 OUTPUT_EXCEL = "recipients_data.xlsx"
 SYNC_STATE_FILE = "last_sync.json"

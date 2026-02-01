@@ -6,7 +6,7 @@ import requests
 import json
 
 # Google Apps Script URL
-APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec"
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec"
 
 def upload_to_google_sheet():
     """Read Excel and upload data to Google Sheets"""
@@ -24,30 +24,34 @@ def upload_to_google_sheet():
         print()
         print("📤 Uploading to Google Sheets...")
         
-        # Convert DataFrame to list of dicts
         data_list = df.to_dict('records')
-        
-        # Send to Google Sheets via Apps Script
-        payload = {
-            'action': 'updateSheet',
-            'data': data_list
-        }
-        
-        response = requests.post(APPS_SCRIPT_URL, json=payload, timeout=30)
-        
-        if response.status_code == 200:
-            print("✅ Data uploaded to Google Sheets successfully!")
-            print()
-            print("⏳ Google Sheets is being updated...")
-            print("   Check your Google Sheet in 1-2 minutes")
-        else:
-            print(f"⚠️ Upload status: {response.status_code}")
-            print("   Data may still have been uploaded")
-            print()
-            print("Manual method:")
-            print("1. Copy data from: recipients_data.xlsx")
-            print("2. Paste into your Google Sheet")
-            print("3. The website will show it automatically")
+        success = 0
+        failed = 0
+
+        for record in data_list:
+            payload = {
+                "receiptId": record.get("Receipt No", ""),
+                "email": record.get("Email") or record.get("Recipient Email") or record.get("Name", ""),
+                "Name": record.get("Name", ""),
+                "Amount": record.get("Amount", ""),
+                "Due Amount": record.get("Due Amount", ""),
+                "Date": record.get("Date", ""),
+                "Description": record.get("Description", ""),
+                "Payment_Status": record.get("Payment_Status", ""),
+                "Amount_Paid": record.get("Amount_Paid", "")
+            }
+
+            response = requests.post(APPS_SCRIPT_URL, json=payload, timeout=30)
+            if response.status_code == 200:
+                success += 1
+            else:
+                failed += 1
+                print(f"⚠️ Failed: {payload.get('Name')} (status {response.status_code})")
+
+        if success:
+            print(f"✅ Uploaded {success} records to Google Sheets")
+        if failed:
+            print(f"⚠️ {failed} records failed to upload")
             
     except Exception as e:
         print(f"❌ Error: {e}")
