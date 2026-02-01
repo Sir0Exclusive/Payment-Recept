@@ -12,8 +12,18 @@ async function loadUserReceipts(email) {
         const sheetData = await fetchGoogleSheetData();
         
         if (sheetData && sheetData.length > 0) {
-            // Filter data for current user if available
-            const userData = sheetData.map(row => ({
+            // Filter data for current user ONLY (match by email)
+            const userReceipts = sheetData.filter(row => {
+                const recipientEmail = String(row['Recipient Email'] || '').toLowerCase().trim();
+                return recipientEmail === email.toLowerCase();
+            });
+
+            if (userReceipts.length === 0) {
+                receiptsList.innerHTML = '<p>No payments found for your account.</p>';
+                return;
+            }
+
+            const userData = userReceipts.map(row => ({
                 id: row['Receipt No'] || 'N/A',
                 data: row
             }));
@@ -129,3 +139,15 @@ async function loadReceiptData(receiptId) {
     return null;
 }
 
+// Hide admin button for non-admin users
+window.addEventListener('DOMContentLoaded', () => {
+    if (isLoggedIn()) {
+        const currentUser = getCurrentUser();
+        const adminBtn = document.getElementById('adminBtn');
+        const ADMIN_EMAIL = "sarwar@example.com"; // Change to your email
+        
+        if (adminBtn && currentUser.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+            adminBtn.style.display = 'none';
+        }
+    }
+});

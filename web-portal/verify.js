@@ -28,11 +28,22 @@ async function showPaymentDashboard() {
         const sheetData = await fetchGoogleSheetData();
         
         if (sheetData && sheetData.length > 0) {
+            // Filter payments for current user ONLY
+            const userPayments = sheetData.filter(row => {
+                const recipientEmail = String(row['Recipient Email'] || '').toLowerCase().trim();
+                return recipientEmail === currentUser.toLowerCase();
+            });
+
+            if (userPayments.length === 0) {
+                receiptDetails.innerHTML = '<p>No payment history found for your account.</p>';
+                return;
+            }
+
             // Display all payments from Google Sheets
             receiptDetails.innerHTML = `
                 <h2>💳 Payment History</h2>
                 <div style="margin-top: 20px;">
-                    ${sheetData.map(row => `
+                    ${userPayments.map(row => `
                         <div class="receipt-card" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
                             <h3 style="margin-top: 0; color: #333;">${row.Name}</h3>
                             <div class="receipt-detail">
