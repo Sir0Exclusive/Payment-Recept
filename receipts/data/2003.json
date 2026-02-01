@@ -1,0 +1,15 @@
+{
+  "id": "2003",
+  "data": {
+    "Name": "Jane Smith",
+    "Amount": 3500,
+    "Due Amount": 1500,
+    "Date": "2026-01-30",
+    "Description": "Partial payment",
+    "Receipt No": 2003,
+    "Payment_Status": "DUE",
+    "Amount_Paid": "\u00a52000"
+  },
+  "hash": "1c580fb2a20295f560da42f50af5ab1997083e51d9ada63d0185cb36b4677bd8",
+  "timestamp": "2026-02-02T01:04:50.558800"
+}

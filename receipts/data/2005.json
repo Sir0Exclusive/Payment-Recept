@@ -1,0 +1,15 @@
+{
+  "id": "2005",
+  "data": {
+    "Name": "Maria Garcia",
+    "Amount": 1800,
+    "Due Amount": 0,
+    "Date": "2026-01-28",
+    "Description": "Retainer",
+    "Receipt No": 2005,
+    "Payment_Status": "PAID",
+    "Amount_Paid": "\u00a51800"
+  },
+  "hash": "37515485beb0eb3c6fd9ef2b121d60097295690bba356ff6333e08975b3d60a0",
+  "timestamp": "2026-02-02T01:04:50.692189"
+}
