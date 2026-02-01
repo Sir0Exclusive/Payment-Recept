@@ -55,6 +55,14 @@ async function verifyReceipt() {
                 <span class="value">${receiptData.data['Due Amount']}</span>
             </div>
             <div class="receipt-detail">
+                <span class="label">Amount Paid:</span>
+                <span class="value">${receiptData.data.Amount_Paid || 'N/A'}</span>
+            </div>
+            <div class="receipt-detail">
+                <span class="label">Payment Status:</span>
+                <span class="value" style="font-weight: bold; color: ${receiptData.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}">${receiptData.data.Payment_Status || 'N/A'}</span>
+            </div>
+            <div class="receipt-detail">
                 <span class="label">Date:</span>
                 <span class="value">${receiptData.data.Date}</span>
             </div>

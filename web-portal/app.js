@@ -30,6 +30,8 @@ async function loadUserReceipts(email) {
                 <p><strong>Name:</strong> ${receipt.data.Name}</p>
                 <p><strong>Amount:</strong> ${receipt.data.Amount}</p>
                 <p><strong>Due Amount:</strong> ${receipt.data['Due Amount']}</p>
+                <p><strong>Amount Paid:</strong> ${receipt.data.Amount_Paid || 'N/A'}</p>
+                <p><strong>Payment Status:</strong> <span style="color: ${receipt.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}; font-weight: bold;">${receipt.data.Payment_Status || 'N/A'}</span></p>
                 <p><strong>Date:</strong> ${receipt.data.Date}</p>
                 <p><strong>Description:</strong> ${receipt.data.Description}</p>
                 <p><strong>Issued:</strong> ${new Date(receipt.timestamp).toLocaleString()}</p>

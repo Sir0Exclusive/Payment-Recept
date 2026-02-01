@@ -6,8 +6,10 @@
     "Due Amount": "\u00a5500",
     "Date": "2026-02-01",
     "Description": "Dummy payment",
-    "Receipt No": 2001
+    "Receipt No": 2001,
+    "Payment_Status": "DUE",
+    "Amount_Paid": "\u00a52000"
   },
   "hash": "9ae3c8e95098e20e047521c99914a8c5a5418cb99548410eafbc7f492d881ebf",
-  "timestamp": "2026-02-02T00:47:05.391887"
+  "timestamp": "2026-02-02T00:50:37.275732"
 }

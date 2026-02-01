@@ -48,9 +48,32 @@ def generate_qr_and_barcode(receipt_id, receipt_data):
 
 def save_receipt_data(receipt_id, receipt_data, receipt_hash, output_dir):
     """Save receipt data as JSON for web portal"""
+    # Calculate payment status
+    def parse_currency(value):
+        if value is None:
+            return 0.0
+        text = str(value).replace('¥', '').replace(',', '').strip()
+        try:
+            return float(text) if text else 0.0
+        except ValueError:
+            return 0.0
+    
+    amount = receipt_data.get('Amount', '0')
+    due_amount = receipt_data.get('Due Amount', '0')
+    amount_value = parse_currency(amount)
+    due_value = parse_currency(due_amount)
+    paid_value = max(amount_value - due_value, 0.0)
+    status_text = "PAID" if due_value <= 0 else "DUE"
+    paid_display = f"¥{paid_value:,.2f}" if paid_value % 1 else f"¥{int(paid_value)}"
+    
+    # Add calculated fields
+    receipt_data_with_status = receipt_data.copy()
+    receipt_data_with_status['Payment_Status'] = status_text
+    receipt_data_with_status['Amount_Paid'] = paid_display
+    
     data = {
         'id': receipt_id,
-        'data': receipt_data,
+        'data': receipt_data_with_status,
         'hash': receipt_hash,
         'timestamp': datetime.now().isoformat()
     }
