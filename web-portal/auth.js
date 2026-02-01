@@ -42,8 +42,26 @@ function register() {
     };
 
     saveUsers(users);
+    
+    // Notify Google Sheets to create recipient section
+    notifyGoogleSheet(email);
+    
     errorMsg.textContent = '';
     alert('Registration successful! Please login.');
+}
+
+async function notifyGoogleSheet(email) {
+    const SHEET_WEBHOOK = "https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec";
+    try {
+        await fetch(SHEET_WEBHOOK, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        console.log('Recipient section created in Google Sheet');
+    } catch (error) {
+        console.warn('Could not create section in Google Sheet:', error);
+    }
 }
 
 function login() {
@@ -70,6 +88,10 @@ function login() {
 
     // Create session
     sessionStorage.setItem(SESSION_KEY, email);
+    
+    // Ensure recipient section exists in Google Sheet
+    notifyGoogleSheet(email);
+    
     showDashboard(email);
 }
 
