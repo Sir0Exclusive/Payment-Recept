@@ -5,71 +5,82 @@ const receiptId = urlParams.get('id');
 // Google Apps Script Web App URL (replace after deployment)
 const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwd-VHVeKsNKD4lWeJuP0cXPwALnjL2b6GN0QMQrygAgG95VYRDcs-Ca_swum9OiRWfgQ/exec";
 
-async function verifyReceipt() {
+async function showPaymentDashboard() {
     const receiptDetails = document.getElementById('receiptDetails');
     
-    if (!receiptId) {
-        receiptDetails.innerHTML = '<p class="error-msg">No receipt ID provided.</p>';
+    if (!isLoggedIn()) {
+        receiptDetails.innerHTML = `
+            <div class="info-box">
+                <p>Login to see your payment history</p>
+                <button onclick="window.location.href='index.html'" style="margin-top: 10px;">Go to Login</button>
+            </div>
+        `;
         return;
     }
 
-    receiptDetails.innerHTML = '<p>Verifying receipt...</p>';
+    receiptDetails.innerHTML = '<p>Loading payment history...</p>';
 
     try {
-        const receiptData = await loadReceiptData(receiptId);
+        const currentUser = getCurrentUser();
+        const userReceipts = getUserReceipts(currentUser);
 
-        if (!receiptData) {
-            receiptDetails.innerHTML = '<p class="tamper-warning">⚠️ Receipt not found or invalid!</p>';
+        if (!userReceipts || userReceipts.length === 0) {
+            receiptDetails.innerHTML = '<p>No payment history found.</p>';
             return;
         }
 
-        // Verify hash (tamper detection)
-        const computedHash = await computeReceiptHash(receiptData.data);
-        const isValid = computedHash === receiptData.hash;
+        // Load and display all receipts
+        const receiptsList = [];
+        for (const receiptId of userReceipts) {
+            const receiptData = await loadReceiptData(receiptId);
+            if (receiptData) {
+                receiptsList.push(receiptData);
+            }
+        }
 
-        if (!isValid) {
-            receiptDetails.innerHTML = `
-                <p class="tamper-warning">⚠️ WARNING: This receipt has been tampered with!</p>
-                <p>The receipt data does not match the original verification hash.</p>
-            `;
+        if (receiptsList.length === 0) {
+            receiptDetails.innerHTML = '<p>No payment history found.</p>';
             return;
         }
 
-        // Display valid receipt - PAYMENT DETAILS ONLY
+        // Display payment history
         receiptDetails.innerHTML = `
-            <div class="verified-badge">✓ Payment Verified</div>
-            <div class="receipt-detail">
-                <span class="label">Recipient:</span>
-                <span class="value">${receiptData.data.Name}</span>
+            <h2>Payment History</h2>
+            <div style="margin-top: 20px;">
+                ${receiptsList.map(receipt => `
+                    <div class="receipt-card" style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h3 style="margin-top: 0; color: #333;">${receipt.data.Name}</h3>
+                        <div class="receipt-detail">
+                            <span class="label">Total Amount:</span>
+                            <span class="value">${receipt.data.Amount}</span>
+                        </div>
+                        <div class="receipt-detail">
+                            <span class="label">Amount Due:</span>
+                            <span class="value">${receipt.data['Due Amount']}</span>
+                        </div>
+                        <div class="receipt-detail">
+                            <span class="label">Amount Paid:</span>
+                            <span class="value" style="color: #00b050; font-weight: bold;">${receipt.data.Amount_Paid || 'N/A'}</span>
+                        </div>
+                        <div class="receipt-detail">
+                            <span class="label">Payment Status:</span>
+                            <span class="value" style="font-weight: bold; font-size: 16px; color: ${receipt.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${receipt.data.Payment_Status || 'N/A'}</span>
+                        </div>
+                        <div class="receipt-detail">
+                            <span class="label">Date:</span>
+                            <span class="value">${receipt.data.Date}</span>
+                        </div>
+                        <div class="receipt-detail">
+                            <span class="label">Description:</span>
+                            <span class="value">${receipt.data.Description}</span>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
-            <div class="receipt-detail">
-                <span class="label">Total Amount:</span>
-                <span class="value">${receiptData.data.Amount}</span>
-            </div>
-            <div class="receipt-detail">
-                <span class="label">Amount Due:</span>
-                <span class="value">${receiptData.data['Due Amount']}</span>
-            </div>
-            <div class="receipt-detail">
-                <span class="label">Amount Paid:</span>
-                <span class="value" style="font-weight: bold; color: #00b050;">${receiptData.data.Amount_Paid || 'N/A'}</span>
-            </div>
-            <div class="receipt-detail">
-                <span class="label">Payment Status:</span>
-                <span class="value" style="font-weight: bold; font-size: 16px; color: ${receiptData.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}">${receiptData.data.Payment_Status || 'N/A'}</span>
-            </div>
-            <div class="receipt-detail">
-                <span class="label">Date:</span>
-                <span class="value">${receiptData.data.Date}</span>
-            </div>
-            <div class="receipt-detail">
-                <span class="label">Description:</span>
-                <span class="value">${receiptData.data.Description}</span>
-            </div>`;
         `;
 
     } catch (error) {
-        receiptDetails.innerHTML = '<p class="error-msg">Error verifying receipt.</p>';
+        receiptDetails.innerHTML = '<p class="error-msg">Error loading payment history.</p>';
         console.error(error);
     }
 }
@@ -142,6 +153,6 @@ async function loadReceiptData(receiptId) {
     return null;
 }
 
-// Verify on page load
-window.addEventListener('DOMContentLoaded', verifyReceipt);
+// Load payment dashboard on page load
+window.addEventListener('DOMContentLoaded', showPaymentDashboard);
 
