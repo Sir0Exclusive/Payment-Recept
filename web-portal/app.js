@@ -26,15 +26,12 @@ async function loadUserReceipts(email) {
 
         receiptsList.innerHTML = receipts.map(receipt => `
             <div class="receipt-card">
-                <h3>Receipt #${receipt.id}</h3>
-                <p><strong>Name:</strong> ${receipt.data.Name}</p>
-                <p><strong>Amount:</strong> ${receipt.data.Amount}</p>
-                <p><strong>Due Amount:</strong> ${receipt.data['Due Amount']}</p>
-                <p><strong>Amount Paid:</strong> ${receipt.data.Amount_Paid || 'N/A'}</p>
-                <p><strong>Payment Status:</strong> <span style="color: ${receipt.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}; font-weight: bold;">${receipt.data.Payment_Status || 'N/A'}</span></p>
-                <p><strong>Date:</strong> ${receipt.data.Date}</p>
-                <p><strong>Description:</strong> ${receipt.data.Description}</p>
-                <p><strong>Issued:</strong> ${new Date(receipt.timestamp).toLocaleString()}</p>
+                <h3>${receipt.data.Name}</h3>
+                <p><strong>Total Amount:</strong> ${receipt.data.Amount}</p>
+                <p><strong>Amount Due:</strong> ${receipt.data['Due Amount']}</p>
+                <p><strong>Amount Paid:</strong> <span style="color: #00b050; font-weight: bold;">${receipt.data.Amount_Paid || 'N/A'}</span></p>
+                <p><strong>Payment Status:</strong> <span style="color: ${receipt.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}; font-weight: bold; font-size: 16px;">${receipt.data.Payment_Status || 'N/A'}</span></p>
+                <p style="font-size: 12px; color: #999;">Date: ${receipt.data.Date}</p>
             </div>
         `).join('');
 

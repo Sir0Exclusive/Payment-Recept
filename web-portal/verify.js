@@ -35,32 +35,28 @@ async function verifyReceipt() {
             return;
         }
 
-        // Display valid receipt
+        // Display valid receipt - PAYMENT DETAILS ONLY
         receiptDetails.innerHTML = `
-            <div class="verified-badge">✓ Receipt Verified - Authentic</div>
-            <div class="receipt-detail">
-                <span class="label">Receipt No:</span>
-                <span class="value">${receiptId}</span>
-            </div>
+            <div class="verified-badge">✓ Payment Verified</div>
             <div class="receipt-detail">
                 <span class="label">Recipient:</span>
                 <span class="value">${receiptData.data.Name}</span>
             </div>
             <div class="receipt-detail">
-                <span class="label">Amount:</span>
+                <span class="label">Total Amount:</span>
                 <span class="value">${receiptData.data.Amount}</span>
             </div>
             <div class="receipt-detail">
-                <span class="label">Due Amount:</span>
+                <span class="label">Amount Due:</span>
                 <span class="value">${receiptData.data['Due Amount']}</span>
             </div>
             <div class="receipt-detail">
                 <span class="label">Amount Paid:</span>
-                <span class="value">${receiptData.data.Amount_Paid || 'N/A'}</span>
+                <span class="value" style="font-weight: bold; color: #00b050;">${receiptData.data.Amount_Paid || 'N/A'}</span>
             </div>
             <div class="receipt-detail">
                 <span class="label">Payment Status:</span>
-                <span class="value" style="font-weight: bold; color: ${receiptData.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}">${receiptData.data.Payment_Status || 'N/A'}</span>
+                <span class="value" style="font-weight: bold; font-size: 16px; color: ${receiptData.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}">${receiptData.data.Payment_Status || 'N/A'}</span>
             </div>
             <div class="receipt-detail">
                 <span class="label">Date:</span>
@@ -69,15 +65,7 @@ async function verifyReceipt() {
             <div class="receipt-detail">
                 <span class="label">Description:</span>
                 <span class="value">${receiptData.data.Description}</span>
-            </div>
-            <div class="receipt-detail">
-                <span class="label">Issued:</span>
-                <span class="value">${new Date(receiptData.timestamp).toLocaleString()}</span>
-            </div>
-            <div class="receipt-detail">
-                <span class="label">Verification Hash:</span>
-                <span class="value" style="font-size: 12px; word-break: break-all;">${receiptData.hash}</span>
-            </div>
+            </div>`;
         `;
 
     } catch (error) {
