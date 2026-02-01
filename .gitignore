@@ -1,0 +1,9 @@
+# Payment Receipt System
+
+receipts/*.pdf
+receipts/*.png
+receipts_temp.csv
+*.pyc
+__pycache__/
+.vscode/
+~$*.xlsx

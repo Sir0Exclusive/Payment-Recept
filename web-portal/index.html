@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt Portal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Payment Receipt Portal</h1>
+        <p>Welcome to the secure payment receipt verification system</p>
+        
+        <div class="login-box" id="loginBox">
+            <h2>Login or Register</h2>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button onclick="login()">Login</button>
+            <button onclick="register()">Register</button>
+            <p class="error-msg" id="errorMsg"></p>
+        </div>
+
+        <div class="dashboard" id="dashboard" style="display: none;">
+            <h2>Your Receipts</h2>
+            <p>Welcome, <span id="userEmail"></span>!</p>
+            <button onclick="logout()">Logout</button>
+            <div id="receiptsList"></div>
+        </div>
+    </div>
+    <script src="auth.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
