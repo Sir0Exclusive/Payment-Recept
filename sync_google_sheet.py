@@ -13,9 +13,14 @@ SYNC_STATE_FILE = "last_sync.json"
 
 
 def fetch_sheet_data():
-    response = requests.get(APPS_SCRIPT_URL, timeout=30)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = requests.get(APPS_SCRIPT_URL, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"⚠️ Could not reach Google Sheets: {e}")
+        print("   Using local Excel data instead")
+        return None
 
 
 def get_last_updated_from_rows(headers, rows):
@@ -43,7 +48,13 @@ def save_last_sync(value):
 
 
 def main():
+    print("Fetching data from Google Sheets...")
     data = fetch_sheet_data()
+    
+    if data is None:
+        print("✓ Using existing local data (recipients_data.xlsx)")
+        return
+
     headers = data.get("headers", [])
     rows = data.get("rows", [])
 
@@ -51,7 +62,7 @@ def main():
     last_updated_local = load_last_sync()
 
     if last_updated_remote and last_updated_remote == last_updated_local:
-        print("No new updates. Excel not changed.")
+        print("✓ No new updates from Google Sheets")
         return
 
     df = pd.DataFrame(rows, columns=headers)
@@ -62,7 +73,7 @@ def main():
     else:
         save_last_sync(datetime.utcnow().isoformat())
 
-    print("Excel updated from Google Sheet.")
+    print(f"✓ Updated {OUTPUT_EXCEL} from Google Sheets")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,164 @@
+GOOGLE SHEETS SYNC & RECEIPT GENERATION GUIDE
+==============================================
+
+OVERVIEW
+--------
+Your system now has a complete workflow:
+
+1. Add payments in Google Sheets
+2. Sync to Excel (offline backup)
+3. Generate receipts (PDF + Web)
+4. Recipients see payments on web portal
+
+HOW TO USE
+----------
+
+OPTION 1: Quick Sync Batch File (EASIEST)
+───────────────────────────────────────
+1. Double-click: SYNC_AND_EXPORT.bat
+2. Wait for completion
+3. PDFs automatically generated
+4. Excel updated with latest data
+
+OPTION 2: Python Script
+──────────────────────
+cd "d:\Payment recept"
+python sync_and_export.py
+
+OPTION 3: Manual Steps
+─────────────────────
+Step A - Update Excel from Google Sheets:
+  python sync_google_sheet.py
+
+Step B - Generate Receipts:
+  python export_receipt.py
+  (or: python generate_receipts.py)
+
+
+WORKFLOW EXPLANATION
+───────────────────
+
+┌─────────────────────┐
+│  Google Sheets      │
+│  (Add payments)     │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ Sync Google Sheets  │
+│  sync_google_sheet  │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ Excel Updated       │
+│ (Offline backup)    │
+└──────────┬──────────┘
+           ↓
+┌─────────────────────┐
+│ Generate Receipts   │
+│ generate_receipts   │
+└──────────┬──────────┘
+           ↓
+     ┌─────┴─────┐
+     ↓           ↓
+  PDF Files   JSON Data
+     ↓           ↓
+ receipts/  receipts/data/
+     ↓
+┌─────────────────────┐
+│  Web Portal         │
+│  Shows all payments │
+│  (Deployed online)  │
+└─────────────────────┘
+
+
+WHAT SYNCS FROM GOOGLE SHEETS
+─────────────────────────────
+
+Google Sheets can contain per-recipient sections:
+  [Recipient: john@email.com]
+  Receipt No | Amount | Due | Date | Description
+  2001       | ¥5000  | ¥0   | ...  | Service
+  2002       | ¥3000  | ¥500 | ...  | Payment
+
+When you sync:
+✓ Data updates in recipients_data.xlsx
+✓ Receipts generate for new entries
+✓ Web portal shows all payments
+✓ Payment status auto-calculated
+
+
+KEY FILES
+────────
+
+1. sync_google_sheet.py
+   - Fetches data from Google Sheets
+   - Updates recipients_data.xlsx
+   - Only syncs if data changed
+
+2. generate_receipts.py
+   - Reads from recipients_data.xlsx
+   - Creates PDF receipts
+   - Generates JSON data for web portal
+
+3. receipts_data.xlsx
+   - LOCAL backup of payment data
+   - Used by Python to generate receipts
+   - NEVER overwritten by web portal
+
+4. recipients.xlsm
+   - Macro workbook with export button
+   - Click button to export individual receipt
+   - Independent from data sync
+
+
+AUTOMATION TIPS
+──────────────
+
+Schedule automatic syncs:
+- Windows Task Scheduler: Schedule SYNC_AND_EXPORT.bat hourly
+- Python: Create cron job (Linux/Mac)
+
+Or run manually each time you add payments to Google Sheets.
+
+
+TROUBLESHOOTING
+──────────────
+
+Q: Excel not updating?
+A: Check if Google Sheets data changed. Sync only updates if data is new.
+
+Q: PDFs showing wrong payment status?
+A: Make sure Amount and Due Amount columns are correct in Excel.
+
+Q: Web portal not showing new receipts?
+A: 1. Run sync_and_export.py
+   2. Push to GitHub (git push)
+   3. Wait 1-2 minutes for GitHub Pages to update
+   4. Hard refresh browser (Ctrl+F5)
+
+Q: Can I edit Excel directly?
+A: Yes! Just run generate_receipts.py after editing to update PDFs.
+
+
+SUMMARY
+───────
+
+Your complete payment system:
+
+LOCAL:
+  ✓ Excel for data entry (recipients_data.xlsx)
+  ✓ Button to export individual receipts (recipients.xlsm)
+  ✓ Python scripts for automation
+
+CLOUD:
+  ✓ Google Sheets for team collaboration
+  ✓ GitHub for version control
+  ✓ GitHub Pages for web portal
+
+SYNC:
+  ✓ Google Sheets → Excel → Receipts → Web Portal
+  ✓ One-way flow (you control the data)
+  ✓ Offline backup in Excel
+  ✓ Online dashboard for recipients
+
+Ready to go! 🚀
