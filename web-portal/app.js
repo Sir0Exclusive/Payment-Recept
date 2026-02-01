@@ -51,7 +51,7 @@ async function loadReceiptData(receiptId) {
 
     // Try to load from GitHub (update with your GitHub username)
     try {
-        const response = await fetch(`https://Sir0Exclusive.github.io/payment-receipts/data/${receiptId}.json`);
+        const response = await fetch(`https://Sir0Exclusive.github.io/Payment-Recept/web-portal/data/${receiptId}.json`);
         if (response.ok) {
             const data = await response.json();
             // Cache locally

@@ -1,0 +1,13 @@
+{
+  "id": "2001",
+  "data": {
+    "Name": "SARWAR",
+    "Amount": "\u00a52500",
+    "Due Amount": "\u00a5500",
+    "Date": "2026-02-01",
+    "Description": "Dummy payment",
+    "Receipt No": 2001
+  },
+  "hash": "9ae3c8e95098e20e047521c99914a8c5a5418cb99548410eafbc7f492d881ebf",
+  "timestamp": "2026-02-02T00:47:05.391887"
+}
