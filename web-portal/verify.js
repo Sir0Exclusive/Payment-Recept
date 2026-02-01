@@ -206,7 +206,29 @@ async function fetchGoogleSheetData() {
         const response = await fetch(GOOGLE_SHEET_URL);
         if (response.ok) {
             const data = await response.json();
-            return data.rows || [];
+            const headers = data.headers || [];
+            const rows = data.rows || [];
+            
+            // Convert rows to objects and compute missing fields
+            return rows.map(row => {
+                const obj = {};
+                headers.forEach((header, idx) => {
+                    obj[header] = row[idx];
+                });
+                
+                // Compute Payment_Status and Amount_Paid if missing
+                const amount = parseFloat(String(obj.Amount || '0').replace(/[^0-9.-]/g, '')) || 0;
+                const dueAmount = parseFloat(String(obj['Due Amount'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+                
+                if (!obj.Payment_Status) {
+                    obj.Payment_Status = dueAmount === 0 ? 'PAID' : 'DUE';
+                }
+                if (!obj.Amount_Paid) {
+                    obj.Amount_Paid = '¥' + (amount - dueAmount);
+                }
+                
+                return obj;
+            });
         }
     } catch (error) {
         console.warn('Google Sheets fetch failed:', error);
