@@ -1,0 +1,98 @@
+MANUALLY ADD DUMMY DATA TO GOOGLE SHEETS
+======================================
+
+The dummy payment data has been created locally in Excel.
+Now add it to your Google Sheet manually:
+
+STEP 1: Open Recipients Data
+──────────────────────────
+1. Open: d:\Payment recept\recipients_data.xlsx
+2. You should see 5 recipients:
+   - SARWAR (¥2500)
+   - John Doe (¥5000)
+   - Jane Smith (¥3500)
+   - Ahmed Khan (¥4200)
+   - Maria Garcia (¥1800)
+
+STEP 2: Select All Data
+──────────────────────
+1. Press Ctrl+A to select all
+2. Press Ctrl+C to copy
+
+STEP 3: Go to Google Sheet
+─────────────────────────
+1. Open your Google Sheet:
+   https://docs.google.com/spreadsheets/d/1Pelzk18wzP4ZjDbe8nV602UNiGIe45n3TOInrmxyr0M/edit
+
+2. Click cell A1 (top-left corner)
+
+STEP 4: Paste Data
+─────────────────
+1. Press Ctrl+V to paste
+2. Wait for upload to complete
+3. Done!
+
+STEP 5: Check Website
+────────────────────
+1. Go to: http://localhost:8000/web-portal/index.html
+2. Login
+3. You should see all 5 payments with payment status!
+
+WHAT YOU'LL SEE
+──────────────
+After pasting, the website dashboard will show:
+
+📊 Payment Dashboard
+├─ SARWAR
+│  ├─ Total: ¥2500
+│  ├─ Due: ¥500
+│  ├─ Paid: ¥2000 ✓
+│  └─ Status: DUE 🔴
+│
+├─ John Doe
+│  ├─ Total: ¥5000
+│  ├─ Due: ¥0
+│  ├─ Paid: ¥5000 ✓
+│  └─ Status: PAID ✅
+│
+├─ Jane Smith
+│  ├─ Total: ¥3500
+│  ├─ Due: ¥1500
+│  ├─ Paid: ¥2000 ✓
+│  └─ Status: DUE 🔴
+│
+├─ Ahmed Khan
+│  ├─ Total: ¥4200
+│  ├─ Due: ¥4200
+│  ├─ Paid: ¥0
+│  └─ Status: DUE 🔴
+│
+└─ Maria Garcia
+   ├─ Total: ¥1800
+   ├─ Due: ¥0
+   ├─ Paid: ¥1800 ✓
+   └─ Status: PAID ✅
+
+TROUBLESHOOTING
+──────────────
+
+Q: Data doesn't show on website?
+A: 1. Make sure you logged in
+   2. Try refreshing (Ctrl+F5)
+   3. Check that data is in Google Sheet
+
+Q: Website shows blank?
+A: Open browser console (F12) and check for errors
+
+Q: Payment Status showing wrong?
+A: Make sure Amount and Due Amount columns are correct
+
+AFTER THIS
+──────────
+Now you have:
+✅ Dummy data in Excel (local backup)
+✅ Dummy data in Google Sheets (online)
+✅ Website showing all payments live
+✅ Full payment management system ready!
+
+Next: Add more payments by editing Google Sheet or Excel!
