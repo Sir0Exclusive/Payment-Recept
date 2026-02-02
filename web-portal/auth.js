@@ -60,6 +60,7 @@ function register() {
     sessionStorage.setItem(SESSION_KEY, email);
     if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+        localStorage.setItem(ADMIN_SESSION_KEY, 'true');
     }
     
     // Check if there's a pending receipt from QR scan
@@ -119,8 +120,10 @@ function login() {
     sessionStorage.setItem(SESSION_KEY, email);
     if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+        localStorage.setItem(ADMIN_SESSION_KEY, 'true');
     } else {
         sessionStorage.removeItem(ADMIN_SESSION_KEY);
+        localStorage.removeItem(ADMIN_SESSION_KEY);
     }
     
     // Ensure recipient section exists in Google Sheet
@@ -140,6 +143,7 @@ function login() {
 function logout() {
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem(ADMIN_SESSION_KEY);
     location.reload();
 }
 
@@ -152,7 +156,7 @@ function isLoggedIn() {
 }
 
 function isAdminSession() {
-    return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+    return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true' || localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
 }
 
 function adminLogin() {
@@ -180,6 +184,7 @@ function adminLogin() {
 
     sessionStorage.setItem(SESSION_KEY, email);
     sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+    localStorage.setItem(ADMIN_SESSION_KEY, 'true');
     window.location.href = 'admin.html';
 }
 
@@ -218,6 +223,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const users = getUsers();
             if (users[currentUser] && users[currentUser].password === ADMIN_PASSWORD_HASH) {
                 sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+                localStorage.setItem(ADMIN_SESSION_KEY, 'true');
             }
         }
 
