@@ -5,23 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Payment Receipts</title>
     <link rel="stylesheet" href="styles.css">
+        <meta name="description" content="Admin dashboard for managing payment receipts">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🔐 Admin Dashboard</h1>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="downloadExcel()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📥 Export Excel</button>
-                <button onclick="document.getElementById('excelUpload').click()" style="background: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📤 Import Excel</button>
-                <button onclick="generateAllReceipts()" style="background: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📄 Generate Receipts</button>
-                <button onclick="logout()" style="background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Logout</button>
+<body class="admin-page">
+    <div class="container admin-container">
+        <header class="admin-header">
+            <div>
+                <h1>🔐 Admin Dashboard</h1>
+                <p class="muted">Manage receipts, import/export data, and monitor payments.</p>
+            </div>
+            <div class="admin-toolbar">
+                <button class="btn btn-success" onclick="downloadExcel()">📥 Export Excel</button>
+                <button class="btn btn-primary" onclick="document.getElementById('excelUpload').click()">📤 Import Excel</button>
+                <button class="btn btn-warning" onclick="generateAllReceipts()">📄 Generate Receipts</button>
+                <button class="btn btn-secondary" onclick="seedDummyData()">🧪 Add Dummy Data</button>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
             <input type="file" id="excelUpload" accept=".xlsx,.xls" style="display: none" onchange="uploadExcel(event)">
         </header>
 
+        <section class="stats-section">
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Receipts</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Paid</div>
+                    <div class="stat-value" id="statPaid">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Due</div>
+                    <div class="stat-value" id="statDue">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Amount</div>
+                    <div class="stat-value" id="statAmount">¥0</div>
+                </div>
+            </div>
+        </section>
+
         <div id="adminPanel">
-            <h2>All Payments</h2>
-            <div id="statusMessage" style="padding: 10px; margin: 10px 0; display: none; border-radius: 5px;"></div>
+            <h2 class="section-title">All Payments</h2>
+            <div id="statusMessage" class="status-message"></div>
             <div id="allPayments"></div>
         </div>
     </div>

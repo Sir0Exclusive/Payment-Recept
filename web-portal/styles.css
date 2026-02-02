@@ -14,6 +14,11 @@ body {
     padding: 20px;
 }
 
+body.admin-page {
+    align-items: flex-start;
+    padding: 30px 20px 60px;
+}
+
 .container {
     background: white;
     border-radius: 15px;
@@ -21,6 +26,10 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     max-width: 600px;
     width: 100%;
+}
+
+.admin-container {
+    max-width: 1100px;
 }
 
 h1 {
@@ -75,6 +84,98 @@ button {
 
 button:hover {
     transform: translateY(-2px);
+}
+
+.admin-header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.admin-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.btn {
+    width: auto;
+    margin: 0;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.btn-primary {
+    background: #2196F3;
+}
+
+.btn-secondary {
+    background: #6c63ff;
+}
+
+.btn-success {
+    background: #4CAF50;
+}
+
+.btn-warning {
+    background: #FF9800;
+}
+
+.btn-danger {
+    background: #ff6b6b;
+}
+
+.stats-section {
+    margin: 20px 0 10px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.stat-card {
+    background: #f7f8ff;
+    border: 1px solid #e6e9ff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.stat-label {
+    color: #666;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2e2e2e;
+    margin-top: 6px;
+}
+
+.section-title {
+    margin-top: 20px;
+}
+
+.status-message {
+    padding: 10px;
+    margin: 10px 0 18px;
+    display: none;
+    border-radius: 10px;
+}
+
+.muted {
+    color: #6d6d6d;
+    text-align: left;
+    margin-bottom: 0;
 }
 
 .error-msg {

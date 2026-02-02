@@ -30,6 +30,24 @@ async function loadAllPayments() {
             return;
         }
 
+        // Update stats
+        const totalReceipts = sheetData.length;
+        const paidCount = sheetData.filter(p => String(p.Payment_Status || '').toUpperCase() === 'PAID').length;
+        const dueCount = sheetData.filter(p => String(p.Payment_Status || '').toUpperCase() !== 'PAID').length;
+        const totalAmount = sheetData.reduce((sum, p) => {
+            const amt = parseFloat(String(p.Amount || '0').replace(/[^0-9.-]/g, '')) || 0;
+            return sum + amt;
+        }, 0);
+
+        const statTotal = document.getElementById('statTotal');
+        const statPaid = document.getElementById('statPaid');
+        const statDue = document.getElementById('statDue');
+        const statAmount = document.getElementById('statAmount');
+        if (statTotal) statTotal.textContent = totalReceipts;
+        if (statPaid) statPaid.textContent = paidCount;
+        if (statDue) statDue.textContent = dueCount;
+        if (statAmount) statAmount.textContent = `¥${totalAmount.toFixed(2)}`;
+
         // Group by recipient
         const groupedByRecipient = {};
         sheetData.forEach(payment => {
@@ -41,15 +59,20 @@ async function loadAllPayments() {
         });
 
         allPayments.innerHTML = Object.entries(groupedByRecipient).map(([recipient, payments]) => `
-            <div style="margin-bottom: 30px; padding: 20px; border: 2px solid #4CAF50; border-radius: 10px; background: #f9f9f9;">
-                <h3 style="margin-top: 0; color: #4CAF50;">📧 ${recipient}</h3>
-                <p style="color: #666; font-size: 14px;">Total Payments: ${payments.length}</p>
-                
+            <div class="receipt-card" style="margin-bottom: 22px; background: #f8faff; border: 1px solid #e3e7ff;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="margin: 0; color: #3f51b5;">📧 ${recipient}</h3>
+                        <p class="muted" style="margin-top: 6px;">Total Payments: ${payments.length}</p>
+                    </div>
+                    <span style="padding: 6px 12px; border-radius: 999px; background: #eef2ff; color: #3f51b5; font-weight: 600;">Recipient</span>
+                </div>
+
                 ${payments.map(payment => `
-                    <div class="receipt-card" style="margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: white;">
+                    <div class="receipt-card" style="margin: 14px 0 0; background: #fff;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h4 style="margin: 0; color: #333;">Receipt #${payment['Receipt No']}</h4>
-                            <span style="font-weight: bold; font-size: 16px; color: ${payment.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${payment.Payment_Status || 'N/A'}</span>
+                            <span style="font-weight: 700; font-size: 14px; color: ${payment.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${payment.Payment_Status || 'N/A'}</span>
                         </div>
                         
                         <div class="receipt-detail">
@@ -221,6 +244,49 @@ async function generateAllReceipts() {
     } catch (error) {
         showStatus('Generation failed: ' + error.message, 'error');
     }
+}
+
+// Seed Dummy Data
+async function seedDummyData() {
+    if (!isAdminSession()) {
+        showStatus('Admin session required', 'error');
+        return;
+    }
+
+    const confirmSeed = confirm('Add dummy data to Google Sheets? This will create multiple test receipts.');
+    if (!confirmSeed) return;
+
+    showStatus('Adding dummy data...', 'info');
+
+    const dummyData = [
+        { receiptId: '10001', email: 'sarwaroffjp@gmail.com', Name: 'Sarwar Admin', Amount: '¥5000', 'Due Amount': '0', Date: '2026-01-05', Description: 'Website Development', Payment_Status: 'PAID', Amount_Paid: '¥5000' },
+        { receiptId: '10002', email: 'sarwaroffjp@gmail.com', Name: 'Sarwar Admin', Amount: '¥3500', 'Due Amount': '500', Date: '2026-01-20', Description: 'Hosting Renewal', Payment_Status: 'DUE', Amount_Paid: '¥3000' },
+        { receiptId: '20001', email: 'john.doe@gmail.com', Name: 'John Doe', Amount: '¥1200', 'Due Amount': '0', Date: '2026-01-07', Description: 'Consulting Fee', Payment_Status: 'PAID', Amount_Paid: '¥1200' },
+        { receiptId: '20002', email: 'john.doe@gmail.com', Name: 'John Doe', Amount: '¥1800', 'Due Amount': '200', Date: '2026-01-28', Description: 'Monthly Service', Payment_Status: 'DUE', Amount_Paid: '¥1600' },
+        { receiptId: '30001', email: 'amina.khan@gmail.com', Name: 'Amina Khan', Amount: '¥2500', 'Due Amount': '0', Date: '2026-01-09', Description: 'Design Package', Payment_Status: 'PAID', Amount_Paid: '¥2500' },
+        { receiptId: '30002', email: 'amina.khan@gmail.com', Name: 'Amina Khan', Amount: '¥2200', 'Due Amount': '200', Date: '2026-01-22', Description: 'Brand Assets', Payment_Status: 'DUE', Amount_Paid: '¥2000' },
+        { receiptId: '40001', email: 'maria.garcia@gmail.com', Name: 'Maria Garcia', Amount: '¥4200', 'Due Amount': '0', Date: '2026-01-12', Description: 'Event Coverage', Payment_Status: 'PAID', Amount_Paid: '¥4200' },
+        { receiptId: '40002', email: 'maria.garcia@gmail.com', Name: 'Maria Garcia', Amount: '¥1900', 'Due Amount': '900', Date: '2026-01-30', Description: 'Extra Revisions', Payment_Status: 'DUE', Amount_Paid: '¥1000' },
+        { receiptId: '50001', email: 'ahmed.khan@gmail.com', Name: 'Ahmed Khan', Amount: '¥3000', 'Due Amount': '0', Date: '2026-01-15', Description: 'App Maintenance', Payment_Status: 'PAID', Amount_Paid: '¥3000' },
+        { receiptId: '50002', email: 'ahmed.khan@gmail.com', Name: 'Ahmed Khan', Amount: '¥2800', 'Due Amount': '400', Date: '2026-01-31', Description: 'Feature Upgrade', Payment_Status: 'DUE', Amount_Paid: '¥2400' }
+    ];
+
+    let success = 0;
+    let failed = 0;
+
+    for (const row of dummyData) {
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(row)
+        });
+
+        if (response.ok) success++;
+        else failed++;
+    }
+
+    showStatus(`Dummy data added: ${success} success, ${failed} failed`, success > 0 ? 'success' : 'error');
+    setTimeout(() => loadAllPayments(), 1000);
 }
 
 // Show status message
