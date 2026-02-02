@@ -10,16 +10,24 @@
     <div class="container">
         <header>
             <h1>🔐 Admin Dashboard</h1>
-            <button onclick="logout()" style="background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Logout</button>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="downloadExcel()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📥 Export Excel</button>
+                <button onclick="document.getElementById('excelUpload').click()" style="background: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📤 Import Excel</button>
+                <button onclick="generateAllReceipts()" style="background: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">📄 Generate Receipts</button>
+                <button onclick="logout()" style="background: #ff6b6b; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Logout</button>
+            </div>
+            <input type="file" id="excelUpload" accept=".xlsx,.xls" style="display: none" onchange="uploadExcel(event)">
         </header>
 
         <div id="adminPanel">
             <h2>All Payments</h2>
+            <div id="statusMessage" style="padding: 10px; margin: 10px 0; display: none; border-radius: 5px;"></div>
             <div id="allPayments"></div>
         </div>
     </div>
 
     <script src="auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

@@ -124,3 +124,116 @@ async function fetchGoogleSheetData() {
 
 // Load on page load
 window.addEventListener('DOMContentLoaded', loadAllPayments);
+
+// Excel Export
+async function downloadExcel() {
+    showStatus('Exporting to Excel...', 'info');
+    
+    try {
+        const sheetData = await fetchGoogleSheetData();
+        
+        if (!sheetData || sheetData.length === 0) {
+            showStatus('No data to export', 'error');
+            return;
+        }
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(sheetData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Receipts');
+        XLSX.writeFile(wb, `payments_${new Date().toISOString().split('T')[0]}.xlsx`);
+        
+        showStatus('Excel exported successfully!', 'success');
+    } catch (error) {
+        showStatus('Export failed: ' + error.message, 'error');
+    }
+}
+
+// Excel Import
+async function uploadExcel(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    showStatus('Importing Excel...', 'info');
+
+    try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        if (jsonData.length === 0) {
+            showStatus('No data found in Excel', 'error');
+            return;
+        }
+
+        // Upload to Google Sheets
+        let success = 0;
+        let failed = 0;
+
+        for (const row of jsonData) {
+            const payload = {
+                receiptId: row['Receipt No'] || row.receiptId,
+                email: row['Recipient Email'] || row.email,
+                Name: row.Name,
+                Amount: row.Amount,
+                'Due Amount': row['Due Amount'] || row.dueAmount,
+                Date: row.Date,
+                Description: row.Description,
+                Payment_Status: row.Payment_Status || row.paymentStatus,
+                Amount_Paid: row.Amount_Paid || row.amountPaid
+            };
+
+            const response = await fetch(GOOGLE_SHEET_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) success++;
+            else failed++;
+        }
+
+        showStatus(`Import complete: ${success} uploaded, ${failed} failed`, success > 0 ? 'success' : 'error');
+        setTimeout(() => loadAllPayments(), 1000);
+        
+    } catch (error) {
+        showStatus('Import failed: ' + error.message, 'error');
+    }
+
+    event.target.value = '';
+}
+
+// Generate All Receipts
+async function generateAllReceipts() {
+    showStatus('Generating receipts...', 'info');
+    
+    try {
+        const sheetData = await fetchGoogleSheetData();
+        
+        if (!sheetData || sheetData.length === 0) {
+            showStatus('No data to generate receipts from', 'error');
+            return;
+        }
+
+        showStatus(`${sheetData.length} receipts generated (simulation - requires backend)`, 'success');
+        // In real implementation, this would call Python backend to generate PDFs
+        
+    } catch (error) {
+        showStatus('Generation failed: ' + error.message, 'error');
+    }
+}
+
+// Show status message
+function showStatus(message, type) {
+    const statusEl = document.getElementById('statusMessage');
+    statusEl.textContent = message;
+    statusEl.style.display = 'block';
+    statusEl.style.background = type === 'success' ? '#4CAF50' : type === 'error' ? '#ff6b6b' : '#2196F3';
+    statusEl.style.color = 'white';
+    
+    if (type === 'success' || type === 'error') {
+        setTimeout(() => {
+            statusEl.style.display = 'none';
+        }, 5000);
+    }
+}
