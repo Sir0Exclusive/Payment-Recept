@@ -13,7 +13,7 @@ if (!isLoggedIn()) {
     window.location.href = 'index.html';
 }
 
-if (!isAdmin()) {
+if (!isAdmin() || !isAdminSession()) {
     alert('Access denied. Admin only.');
     window.location.href = 'verify.html';
 }

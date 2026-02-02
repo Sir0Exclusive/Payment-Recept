@@ -146,7 +146,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const adminBtn = document.getElementById('adminBtn');
         const ADMIN_EMAIL = "sarwaroffjp@gmail.com";
         
-        if (adminBtn && currentUser.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+        if (adminBtn && (currentUser.toLowerCase() !== ADMIN_EMAIL.toLowerCase() || !isAdminSession())) {
             adminBtn.style.display = 'none';
         }
     }

@@ -3,6 +3,9 @@
 
 const AUTH_KEY = 'payment_receipts_users';
 const SESSION_KEY = 'payment_receipts_session';
+const ADMIN_SESSION_KEY = 'payment_receipts_admin_session';
+const ADMIN_EMAIL = 'sarwaroffjp@gmail.com';
+const ADMIN_PASSWORD_HASH = 'QGFyZmkxMjM0c2FsdF9rZXlfMjAyNg==';
 
 function getUsers() {
     const users = localStorage.getItem(AUTH_KEY);
@@ -30,6 +33,11 @@ function register() {
 
     const users = getUsers();
 
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && hashPassword(password) !== ADMIN_PASSWORD_HASH) {
+        errorMsg.textContent = 'Admin password is incorrect.';
+        return;
+    }
+
     if (users[email]) {
         errorMsg.textContent = 'User already exists. Please login.';
         return;
@@ -50,6 +58,9 @@ function register() {
     
     // Auto-login after registration
     sessionStorage.setItem(SESSION_KEY, email);
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+    }
     
     // Check if there's a pending receipt from QR scan
     const pendingReceiptId = sessionStorage.getItem('pendingReceiptId');
@@ -99,8 +110,18 @@ function login() {
         return;
     }
 
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() && hashPassword(password) !== ADMIN_PASSWORD_HASH) {
+        errorMsg.textContent = 'Admin password is incorrect.';
+        return;
+    }
+
     // Create session
     sessionStorage.setItem(SESSION_KEY, email);
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+    } else {
+        sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    }
     
     // Ensure recipient section exists in Google Sheet
     notifyGoogleSheet(email);
@@ -118,6 +139,7 @@ function login() {
 
 function logout() {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
     location.reload();
 }
 
@@ -127,6 +149,10 @@ function getCurrentUser() {
 
 function isLoggedIn() {
     return getCurrentUser() !== null;
+}
+
+function isAdminSession() {
+    return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
 }
 
 function showDashboard(email) {
@@ -152,6 +178,12 @@ function addReceiptToUser(email, receiptId, receiptData) {
 window.addEventListener('DOMContentLoaded', () => {
     const currentUser = getCurrentUser();
     if (currentUser) {
+        if (currentUser.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            const users = getUsers();
+            if (users[currentUser] && users[currentUser].password === ADMIN_PASSWORD_HASH) {
+                sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+            }
+        }
         showDashboard(currentUser);
     }
 });
