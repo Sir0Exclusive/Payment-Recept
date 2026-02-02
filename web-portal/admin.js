@@ -10,12 +10,12 @@ function isAdmin() {
 
 // Check authentication
 if (!isLoggedIn()) {
-    window.location.href = 'index.html';
+    window.location.href = 'admin-login.html';
 }
 
 if (!isAdmin() || !isAdminSession()) {
     alert('Access denied. Admin only.');
-    window.location.href = 'verify.html';
+    window.location.href = 'admin-login.html';
 }
 
 async function loadAllPayments() {

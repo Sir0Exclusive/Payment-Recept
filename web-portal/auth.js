@@ -155,6 +155,34 @@ function isAdminSession() {
     return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
 }
 
+function adminLogin() {
+    const emailEl = document.getElementById('adminEmail');
+    const passwordEl = document.getElementById('adminPassword');
+    const errorEl = document.getElementById('adminError');
+
+    const email = emailEl ? emailEl.value.trim() : '';
+    const password = passwordEl ? passwordEl.value : '';
+
+    if (!email || !password) {
+        if (errorEl) errorEl.textContent = 'Please enter admin email and password';
+        return;
+    }
+
+    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+        if (errorEl) errorEl.textContent = 'Admin email is incorrect';
+        return;
+    }
+
+    if (hashPassword(password) !== ADMIN_PASSWORD_HASH) {
+        if (errorEl) errorEl.textContent = 'Admin password is incorrect';
+        return;
+    }
+
+    sessionStorage.setItem(SESSION_KEY, email);
+    sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+    window.location.href = 'admin.html';
+}
+
 function showDashboard(email) {
     document.getElementById('loginBox').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
