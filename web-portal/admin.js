@@ -72,7 +72,10 @@ async function loadAllPayments() {
                     <div class="receipt-card" style="margin: 14px 0 0; background: #fff;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h4 style="margin: 0; color: #333;">Receipt #${payment['Receipt No']}</h4>
-                            <span style="font-weight: 700; font-size: 14px; color: ${payment.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${payment.Payment_Status || 'N/A'}</span>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span style="font-weight: 700; font-size: 14px; color: ${payment.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${payment.Payment_Status || 'N/A'}</span>
+                                <button class="btn btn-primary" style="padding: 6px 12px;" data-edit-receipt="${payment['Receipt No']}">Edit</button>
+                            </div>
                         </div>
                         
                         <div class="receipt-detail">
@@ -303,3 +306,92 @@ function showStatus(message, type) {
         }, 5000);
     }
 }
+
+// Edit Modal Logic
+let cachedPayments = [];
+
+function openEditModal(payment) {
+    const modal = document.getElementById('editModal');
+    if (!modal) return;
+
+    document.getElementById('editReceiptId').value = payment['Receipt No'] || '';
+    document.getElementById('editEmail').value = payment['Recipient Email'] || '';
+    document.getElementById('editName').value = payment.Name || '';
+    document.getElementById('editAmount').value = payment.Amount || '';
+    document.getElementById('editDueAmount').value = payment['Due Amount'] || '';
+    document.getElementById('editDate').value = payment.Date || '';
+    document.getElementById('editDescription').value = payment.Description || '';
+
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('editModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+async function saveEdit() {
+    const receiptId = document.getElementById('editReceiptId').value.trim();
+    if (!receiptId) {
+        showStatus('Missing receipt ID', 'error');
+        return;
+    }
+
+    const payload = {
+        receiptId,
+        email: document.getElementById('editEmail').value.trim(),
+        Name: document.getElementById('editName').value.trim(),
+        Amount: document.getElementById('editAmount').value.trim(),
+        'Due Amount': document.getElementById('editDueAmount').value.trim(),
+        Date: document.getElementById('editDate').value,
+        Description: document.getElementById('editDescription').value.trim()
+    };
+
+    try {
+        showStatus('Saving changes...', 'info');
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            showStatus('Save failed', 'error');
+            return;
+        }
+
+        closeEditModal();
+        showStatus('Receipt updated successfully', 'success');
+        setTimeout(() => loadAllPayments(), 600);
+    } catch (error) {
+        showStatus('Save failed: ' + error.message, 'error');
+    }
+}
+
+async function refreshCache() {
+    const sheetData = await fetchGoogleSheetData();
+    cachedPayments = sheetData || [];
+}
+
+document.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (target && target.matches('[data-edit-receipt]')) {
+        const receiptId = target.getAttribute('data-edit-receipt');
+        if (!cachedPayments.length) {
+            await refreshCache();
+        }
+        const payment = cachedPayments.find(p => String(p['Receipt No']) === String(receiptId));
+        if (payment) {
+            openEditModal(payment);
+        } else {
+            showStatus('Receipt not found in cache', 'error');
+        }
+    }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+    refreshCache();
+});

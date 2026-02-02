@@ -52,6 +52,39 @@
         </div>
     </div>
 
+    <div id="editModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Receipt</h2>
+                <button class="modal-close" onclick="closeEditModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editReceiptId">
+                <label class="modal-label">Recipient Email</label>
+                <input type="email" id="editEmail" placeholder="Recipient Email">
+
+                <label class="modal-label">Name</label>
+                <input type="text" id="editName" placeholder="Name">
+
+                <label class="modal-label">Amount</label>
+                <input type="text" id="editAmount" placeholder="Amount">
+
+                <label class="modal-label">Due Amount</label>
+                <input type="text" id="editDueAmount" placeholder="Due Amount">
+
+                <label class="modal-label">Date</label>
+                <input type="date" id="editDate">
+
+                <label class="modal-label">Description</label>
+                <input type="text" id="editDescription" placeholder="Description">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-success" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <script src="auth.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="admin.js"></script>
