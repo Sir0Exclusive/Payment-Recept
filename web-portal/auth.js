@@ -47,7 +47,20 @@ function register() {
     notifyGoogleSheet(email);
     
     errorMsg.textContent = '';
-    alert('Registration successful! Please login.');
+    
+    // Auto-login after registration
+    sessionStorage.setItem(SESSION_KEY, email);
+    
+    // Check if there's a pending receipt from QR scan
+    const pendingReceiptId = sessionStorage.getItem('pendingReceiptId');
+    if (pendingReceiptId) {
+        sessionStorage.removeItem('pendingReceiptId');
+        window.location.href = `verify.html?id=${pendingReceiptId}`;
+        return;
+    }
+    
+    alert('Registration successful! Redirecting to dashboard...');
+    showDashboard(email);
 }
 
 async function notifyGoogleSheet(email) {
@@ -91,6 +104,14 @@ function login() {
     
     // Ensure recipient section exists in Google Sheet
     notifyGoogleSheet(email);
+    
+    // Check if there's a pending receipt from QR scan
+    const pendingReceiptId = sessionStorage.getItem('pendingReceiptId');
+    if (pendingReceiptId) {
+        sessionStorage.removeItem('pendingReceiptId');
+        window.location.href = `verify.html?id=${pendingReceiptId}`;
+        return;
+    }
     
     showDashboard(email);
 }

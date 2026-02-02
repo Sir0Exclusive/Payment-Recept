@@ -144,7 +144,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (isLoggedIn()) {
         const currentUser = getCurrentUser();
         const adminBtn = document.getElementById('adminBtn');
-        const ADMIN_EMAIL = "sarwar@example.com"; // Change to your email
+        const ADMIN_EMAIL = "sarwarofficial2006@gmail.com";
         
         if (adminBtn && currentUser.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
             adminBtn.style.display = 'none';

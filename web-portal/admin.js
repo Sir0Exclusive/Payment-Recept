@@ -1,6 +1,6 @@
 // Admin Dashboard - View all payments
 const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec";
-const ADMIN_EMAIL = "sarwar@example.com"; // Change this to your admin email
+const ADMIN_EMAIL = "sarwarofficial2006@gmail.com";
 
 // Check if user is admin
 function isAdmin() {
