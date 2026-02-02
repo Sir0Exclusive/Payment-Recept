@@ -184,9 +184,17 @@ function adminLogin() {
 }
 
 function showDashboard(email) {
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('userEmail').textContent = email;
+    const loginBox = document.getElementById('loginBox');
+    const dashboard = document.getElementById('dashboard');
+    const userEmailEl = document.getElementById('userEmail');
+
+    if (!loginBox || !dashboard || !userEmailEl) {
+        return;
+    }
+
+    loginBox.style.display = 'none';
+    dashboard.style.display = 'block';
+    userEmailEl.textContent = email;
     loadUserReceipts(email);
 }
 
@@ -212,6 +220,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
             }
         }
-        showDashboard(currentUser);
+
+        const loginBox = document.getElementById('loginBox');
+        const dashboard = document.getElementById('dashboard');
+        if (loginBox && dashboard) {
+            showDashboard(currentUser);
+        }
     }
 });
