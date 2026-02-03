@@ -7,6 +7,22 @@ const RECIPIENTS_SHEET = 'Recipients';
 const HEADERS = ['Receipt No', 'Name', 'Amount', 'Due Amount', 'Date', 'Description', 'Recipient Email', 'Payment_Status', 'Amount_Paid', 'Last Updated'];
 const RECIPIENTS_HEADERS = ['Email', 'Name', 'PasswordHash', 'Created Date', 'Last Login'];
 
+function textResponse_(text) {
+  return ContentService.createTextOutput(String(text))
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function jsonResponse_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 function sanitizeInput_(value) {
   if (value === null || value === undefined) return '';
   return String(value).trim().substring(0, 1000); // Limit to 1000 chars
@@ -101,27 +117,27 @@ function doPost(e) {
       for (let i = 1; i < dataRange.length; i++) {
         if (String(dataRange[i][0]).trim() === receiptId) {
           sheet.deleteRow(i + 1);
-          return ContentService.createTextOutput('DELETED');
+          return textResponse_('DELETED');
         }
       }
-      return ContentService.createTextOutput('NOT_FOUND');
+      return textResponse_('NOT_FOUND');
     }
 
     // If only email provided (user registration)
     if (email && !receiptId) {
       if (!validateEmail_(email)) {
-        return ContentService.createTextOutput('Invalid email format');
+        return textResponse_('Invalid email format');
       }
-      return ContentService.createTextOutput('User registered');
+      return textResponse_('User registered');
     }
 
     if (!receiptId) {
-      return ContentService.createTextOutput('Missing receiptId');
+      return textResponse_('Missing receiptId');
     }
 
     // Validate all required fields
     if (!email || !validateEmail_(email)) {
-      return ContentService.createTextOutput('Invalid email address');
+      return textResponse_('Invalid email address');
     }
 
     const name = sanitizeInput_(data.Name);
@@ -133,15 +149,15 @@ function doPost(e) {
     const amountPaid = String(data.Amount_Paid || '').trim();
 
     if (!name) {
-      return ContentService.createTextOutput('Name cannot be empty');
+      return textResponse_('Name cannot be empty');
     }
 
     if (!validateAmount_(amount)) {
-      return ContentService.createTextOutput('Invalid amount value');
+      return textResponse_('Invalid amount value');
     }
 
     if (dueAmount && !validateAmount_(dueAmount)) {
-      return ContentService.createTextOutput('Invalid due amount value');
+      return textResponse_('Invalid due amount value');
     }
 
     // Check for duplicate receipt ID before creating
@@ -161,7 +177,7 @@ function doPost(e) {
     if (!isUpdate && receiptId && String(receiptId).length > 0) {
       for (let i = 1; i < dataRange.length; i++) {
         if (String(dataRange[i][0]).trim() === receiptId) {
-          return ContentService.createTextOutput('Receipt ID already exists');
+          return textResponse_('Receipt ID already exists');
         }
       }
     }
@@ -182,13 +198,13 @@ function doPost(e) {
 
     if (targetRow !== -1) {
       sheet.getRange(targetRow, 1, 1, HEADERS.length).setValues([rowValues]);
-      return ContentService.createTextOutput('UPDATED');
+      return textResponse_('UPDATED');
     } else {
       sheet.appendRow(rowValues);
-      return ContentService.createTextOutput('CREATED');
+      return textResponse_('CREATED');
     }
   } catch (err) {
-    return ContentService.createTextOutput('Server Error: ' + err.message);
+    return textResponse_('Server Error: ' + err.message);
   }
 }
 
@@ -210,14 +226,12 @@ function doGet(e) {
       status: 'success'
     };
 
-    return ContentService.createTextOutput(JSON.stringify(payload))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse_(payload);
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ 
+    return jsonResponse_({ 
       error: err.message,
       status: 'error'
-    }))
-      .setMimeType(ContentService.MimeType.JSON);
+    });
   }
 }
 
@@ -227,11 +241,11 @@ function handleRecipientLogin_(ss, data) {
   const password = String(data.password || '');
 
   if (!email || !validateEmail_(email)) {
-    return ContentService.createTextOutput('Invalid email');
+    return textResponse_('Invalid email');
   }
 
   if (!password) {
-    return ContentService.createTextOutput('Password required');
+    return textResponse_('Password required');
   }
 
   const sheet = ss.getSheetByName(RECIPIENTS_SHEET) || ss.insertSheet(RECIPIENTS_SHEET);
@@ -245,16 +259,16 @@ function handleRecipientLogin_(ss, data) {
       if (verifyPassword_(password, email, storedHash)) {
         // Update last login
         sheet.getRange(i + 1, 5).setValue(new Date().toISOString());
-        return ContentService.createTextOutput(JSON.stringify({
+        return jsonResponse_({
           status: 'success',
           email: email,
           name: dataRange[i][1]
-        })).setMimeType(ContentService.MimeType.JSON);
+        });
       }
-      return ContentService.createTextOutput('Invalid password');
+      return textResponse_('Invalid password');
     }
   }
-  return ContentService.createTextOutput('User not found');
+  return textResponse_('User not found');
 }
 
 function handleCreateRecipient_(ss, data) {
@@ -263,15 +277,15 @@ function handleCreateRecipient_(ss, data) {
   const password = String(data.password || '');
 
   if (!email || !validateEmail_(email)) {
-    return ContentService.createTextOutput('Invalid email');
+    return textResponse_('Invalid email');
   }
 
   if (!name) {
-    return ContentService.createTextOutput('Name required');
+    return textResponse_('Name required');
   }
 
   if (!password || password.length < 6) {
-    return ContentService.createTextOutput('Password must be at least 6 characters');
+    return textResponse_('Password must be at least 6 characters');
   }
 
   const sheet = ss.getSheetByName(RECIPIENTS_SHEET) || ss.insertSheet(RECIPIENTS_SHEET);
@@ -281,7 +295,7 @@ function handleCreateRecipient_(ss, data) {
   const dataRange = sheet.getDataRange().getValues();
   for (let i = 1; i < dataRange.length; i++) {
     if (String(dataRange[i][0]).trim().toLowerCase() === email) {
-      return ContentService.createTextOutput('Recipient already exists');
+      return textResponse_('Recipient already exists');
     }
   }
 
@@ -289,26 +303,26 @@ function handleCreateRecipient_(ss, data) {
   const now = new Date().toISOString();
   sheet.appendRow([email, name, passwordHash, now, '']);
 
-  return ContentService.createTextOutput('RECIPIENT_CREATED');
+  return textResponse_('RECIPIENT_CREATED');
 }
 
 function handleGetRecipientPayments_(ss, data) {
   const email = String(data.email || '').trim().toLowerCase();
   
   if (!email || !validateEmail_(email)) {
-    return ContentService.createTextOutput(JSON.stringify({
+    return jsonResponse_({
       error: 'Invalid email',
       status: 'error'
-    })).setMimeType(ContentService.MimeType.JSON);
+    });
   }
 
   const sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
-    return ContentService.createTextOutput(JSON.stringify({
+    return jsonResponse_({
       headers: HEADERS,
       rows: [],
       status: 'success'
-    })).setMimeType(ContentService.MimeType.JSON);
+    });
   }
 
   const dataRange = sheet.getDataRange().getValues();
@@ -322,11 +336,11 @@ function handleGetRecipientPayments_(ss, data) {
     }
   }
 
-  return ContentService.createTextOutput(JSON.stringify({
+  return jsonResponse_({
     headers: headers,
     rows: filteredRows,
     status: 'success'
-  })).setMimeType(ContentService.MimeType.JSON);
+  });
 }
 
 function handleGetRecipients_(ss) {
@@ -340,32 +354,32 @@ function handleGetRecipients_(ss) {
   // Remove password hashes from response
   const sanitizedRows = rows.map(row => [row[0], row[1], row[3], row[4]]);
 
-  return ContentService.createTextOutput(JSON.stringify({
+  return jsonResponse_({
     headers: ['Email', 'Name', 'Created Date', 'Last Login'],
     rows: sanitizedRows,
     status: 'success'
-  })).setMimeType(ContentService.MimeType.JSON);
+  });
 }
 
 function handleDeleteRecipient_(ss, data) {
   const email = String(data.email || '').trim().toLowerCase();
   
   if (!email) {
-    return ContentService.createTextOutput('Email required');
+    return textResponse_('Email required');
   }
 
   const sheet = ss.getSheetByName(RECIPIENTS_SHEET);
   if (!sheet) {
-    return ContentService.createTextOutput('NOT_FOUND');
+    return textResponse_('NOT_FOUND');
   }
 
   const dataRange = sheet.getDataRange().getValues();
   for (let i = 1; i < dataRange.length; i++) {
     if (String(dataRange[i][0]).trim().toLowerCase() === email) {
       sheet.deleteRow(i + 1);
-      return ContentService.createTextOutput('DELETED');
+      return textResponse_('DELETED');
     }
   }
-  return ContentService.createTextOutput('NOT_FOUND');
+  return textResponse_('NOT_FOUND');
 }
 
