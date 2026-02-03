@@ -397,7 +397,12 @@ function openAddModal() {
     const modal = document.getElementById('addModal');
     if (!modal) return;
 
-    document.getElementById('addEmail').value = '';
+    const emailSelect = document.getElementById('addEmailSelect');
+    const emailInput = document.getElementById('addEmail');
+    
+    if (emailSelect) emailSelect.value = '';
+    if (emailInput) emailInput.value = '';
+    
     document.getElementById('addName').value = '';
     document.getElementById('addAmount').value = '';
     document.getElementById('addDueAmount').value = '0';
@@ -416,7 +421,11 @@ function closeAddModal() {
 }
 
 async function addNewReceipt() {
-    const email = document.getElementById('addEmail').value.trim();
+    // Check both dropdown and manual input for email
+    const emailSelect = document.getElementById('addEmailSelect');
+    const emailInput = document.getElementById('addEmail');
+    const email = emailSelect?.value || emailInput?.value.trim() || '';
+    
     const name = document.getElementById('addName').value.trim();
     const amount = document.getElementById('addAmount').value.trim();
     const dueAmount = document.getElementById('addDueAmount').value.trim();
@@ -825,10 +834,10 @@ function formatDate(dateStr) {
 
 // Update recipient dropdown in add payment modal
 function updateRecipientDropdown(recipients) {
-    const select = document.getElementById('addEmail');
+    const select = document.getElementById('addEmailSelect');
     if (!select) return;
     
-    select.innerHTML = '<option value="">Select recipient...</option>';
+    select.innerHTML = '<option value="">Select existing recipient...</option>';
     
     recipients.forEach(recipient => {
         const [email, name] = recipient;
@@ -842,18 +851,29 @@ function updateRecipientDropdown(recipients) {
 
 // Setup recipient dropdown change handler (called once on init)
 function setupRecipientDropdown() {
-    const select = document.getElementById('addEmail');
+    const select = document.getElementById('addEmailSelect');
+    const emailInput = document.getElementById('addEmail');
+    const nameInput = document.getElementById('addName');
+    
     if (!select) return;
     
+    // When selecting from dropdown, auto-fill name and clear manual input
     select.addEventListener('change', (e) => {
         const selectedOption = e.target.options[e.target.selectedIndex];
-        const nameInput = document.getElementById('addName');
-        if (selectedOption.dataset.name) {
-            nameInput.value = selectedOption.dataset.name;
-        } else {
-            nameInput.value = '';
+        if (selectedOption.value) {
+            if (nameInput) nameInput.value = selectedOption.dataset.name || '';
+            if (emailInput) emailInput.value = ''; // Clear manual input
         }
     });
+    
+    // When typing email manually, clear dropdown selection
+    if (emailInput) {
+        emailInput.addEventListener('input', () => {
+            if (emailInput.value) {
+                select.value = ''; // Clear dropdown
+            }
+        });
+    }
 }
 
 // Show status for recipients
