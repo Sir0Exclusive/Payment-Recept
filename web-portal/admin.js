@@ -31,16 +31,27 @@ function isAdmin() {
     return currentUser && currentUser.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
 
+// Verify admin access on page load
+function verifyAdminAccess() {
+    if (!isLoggedIn()) {
+        window.location.href = 'admin-login.html';
+        return false;
+    }
 
-// Check authentication
-if (!isLoggedIn()) {
-    window.location.href = 'admin-login.html';
+    if (!isAdmin() || !isAdminSession()) {
+        alert('Access denied. Admin only.');
+        window.location.href = 'admin-login.html';
+        return false;
+    }
+    return true;
 }
 
-if (!isAdmin() || !isAdminSession()) {
-    alert('Access denied. Admin only.');
-    window.location.href = 'admin-login.html';
-}
+// Run verification when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    if (verifyAdminAccess()) {
+        loadAllPayments();
+    }
+});
 
 async function loadAllPayments() {
     const allPayments = document.getElementById('allPayments');
@@ -216,9 +227,6 @@ async function fetchGoogleSheetData() {
         return null;
     }
 }
-
-// Load on page load
-window.addEventListener('DOMContentLoaded', loadAllPayments);
 
 // Excel Export
 async function downloadExcel() {
@@ -403,8 +411,6 @@ function closeEditModal() {
 }
 
 // Edit Modal Logic - Advanced with validation, add, delete, search
-let cachedPayments = [];
-
 function generateReceiptId() {
     return 'RCP' + Date.now().toString().slice(-8);
 }
