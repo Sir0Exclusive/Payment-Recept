@@ -17,14 +17,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function loadMyPayments() {
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-            body: new URLSearchParams({
-                action: 'get_recipient_payments',
-                email: session.email
-            })
-        });
+        const response = await fetch(`${API_URL}?action=get_recipient_payments&email=${encodeURIComponent(session.email)}`);
         
         const data = await response.json();
         

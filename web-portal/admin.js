@@ -24,11 +24,7 @@ function showSection(section) {
 
 async function loadRecipients() {
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-            body: new URLSearchParams({ action: 'get_recipients' })
-        });
+        const response = await fetch(`${API_URL}?action=get_recipients`);
         
         const data = await response.json();
         if (data.status === 'success') {

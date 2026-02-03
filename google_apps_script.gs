@@ -222,7 +222,17 @@ function doPost(e) {
 
 function doGet(e) {
   try {
+    const action = e && e.parameter ? String(e.parameter.action || '').trim() : '';
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+    if (action === 'get_recipients') {
+      return handleGetRecipients_(ss);
+    }
+
+    if (action === 'get_recipient_payments') {
+      return handleGetRecipientPayments_(ss, e.parameter || {});
+    }
+
     const sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
     ensureHeader_(sheet);
     const range = sheet.getDataRange();
