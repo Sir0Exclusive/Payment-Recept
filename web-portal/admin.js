@@ -30,6 +30,8 @@ async function loadAllPayments() {
             return;
         }
 
+        cachedPayments = sheetData;
+
         // Update stats
         const totalReceipts = sheetData.length;
         const paidCount = sheetData.filter(p => String(p.Payment_Status || '').toUpperCase() === 'PAID').length;
@@ -58,60 +60,103 @@ async function loadAllPayments() {
             groupedByRecipient[email].push(payment);
         });
 
-        allPayments.innerHTML = Object.entries(groupedByRecipient).map(([recipient, payments]) => `
-            <div class="receipt-card" style="margin-bottom: 22px; background: #f8faff; border: 1px solid #e3e7ff;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div>
-                        <h3 style="margin: 0; color: #3f51b5;">📧 ${recipient}</h3>
-                        <p class="muted" style="margin-top: 6px;">Total Payments: ${payments.length}</p>
-                    </div>
-                    <span style="padding: 6px 12px; border-radius: 999px; background: #eef2ff; color: #3f51b5; font-weight: 600;">Recipient</span>
-                </div>
-
-                ${payments.map(payment => `
-                    <div class="receipt-card" style="margin: 14px 0 0; background: #fff;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h4 style="margin: 0; color: #333;">Receipt #${payment['Receipt No']}</h4>
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <span style="font-weight: 700; font-size: 14px; color: ${payment.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${payment.Payment_Status || 'N/A'}</span>
-                                <button class="btn btn-primary" style="padding: 6px 12px;" data-edit-receipt="${payment['Receipt No']}">Edit</button>
-                            </div>
-                        </div>
-                        
-                        <div class="receipt-detail">
-                            <span class="label">Name:</span>
-                            <span class="value">${payment.Name}</span>
-                        </div>
-                        <div class="receipt-detail">
-                            <span class="label">Total Amount:</span>
-                            <span class="value">${payment.Amount}</span>
-                        </div>
-                        <div class="receipt-detail">
-                            <span class="label">Amount Due:</span>
-                            <span class="value">${payment['Due Amount']}</span>
-                        </div>
-                        <div class="receipt-detail">
-                            <span class="label">Amount Paid:</span>
-                            <span class="value" style="color: #00b050; font-weight: bold;">${payment.Amount_Paid || 'N/A'}</span>
-                        </div>
-                        <div class="receipt-detail">
-                            <span class="label">Date:</span>
-                            <span class="value">${payment.Date}</span>
-                        </div>
-                        <div class="receipt-detail">
-                            <span class="label">Description:</span>
-                            <span class="value">${payment.Description}</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `).join('');
+        displayPayments(Object.entries(groupedByRecipient));
 
     } catch (error) {
         allPayments.innerHTML = '<p>Error loading payment records.</p>';
         console.error(error);
     }
 }
+
+function displayPayments(groupedEntries) {
+    const allPayments = document.getElementById('allPayments');
+    allPayments.innerHTML = groupedEntries.map(([recipient, payments]) => `
+        <div class="receipt-card" style="margin-bottom: 22px; background: #f8faff; border: 1px solid #e3e7ff;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="margin: 0; color: #3f51b5;">📧 ${recipient}</h3>
+                    <p class="muted" style="margin-top: 6px;">Total Payments: ${payments.length}</p>
+                </div>
+                <span style="padding: 6px 12px; border-radius: 999px; background: #eef2ff; color: #3f51b5; font-weight: 600;">Recipient</span>
+            </div>
+
+            ${payments.map(payment => `
+                <div class="receipt-card" style="margin: 14px 0 0; background: #fff;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                        <h4 style="margin: 0; color: #333;">Receipt #${payment['Receipt No']}</h4>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span style="font-weight: 700; font-size: 14px; color: ${payment.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${payment.Payment_Status || 'N/A'}</span>
+                            <button class="btn btn-primary" style="padding: 6px 12px;" data-edit-receipt="${payment['Receipt No']}">✏️ Edit</button>
+                        </div>
+                    </div>
+                    
+                    <div class="receipt-detail">
+                        <span class="label">Name:</span>
+                        <span class="value">${payment.Name}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Total Amount:</span>
+                        <span class="value">${payment.Amount}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Amount Due:</span>
+                        <span class="value">${payment['Due Amount']}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Amount Paid:</span>
+                        <span class="value" style="color: #00b050; font-weight: bold;">${payment.Amount_Paid || 'N/A'}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Date:</span>
+                        <span class="value">${payment.Date}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Description:</span>
+                        <span class="value">${payment.Description}</span>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `).join('');
+}
+
+function filterPayments() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        const groupedByRecipient = {};
+        cachedPayments.forEach(payment => {
+            const email = payment['Recipient Email'] || payment.Name || 'Unknown';
+            if (!groupedByRecipient[email]) {
+                groupedByRecipient[email] = [];
+            }
+            groupedByRecipient[email].push(payment);
+        });
+        displayPayments(Object.entries(groupedByRecipient));
+        return;
+    }
+
+    const filtered = cachedPayments.filter(p => 
+        String(p['Recipient Email'] || '').toLowerCase().includes(searchTerm) ||
+        String(p.Name || '').toLowerCase().includes(searchTerm)
+    );
+
+    if (filtered.length === 0) {
+        document.getElementById('allPayments').innerHTML = '<p style="color: #999;">No receipts found matching your search.</p>';
+        return;
+    }
+
+    const groupedByRecipient = {};
+    filtered.forEach(payment => {
+        const email = payment['Recipient Email'] || payment.Name || 'Unknown';
+        if (!groupedByRecipient[email]) {
+            groupedByRecipient[email] = [];
+        }
+        groupedByRecipient[email].push(payment);
+    });
+    displayPayments(Object.entries(groupedByRecipient));
+}
+
 
 async function fetchGoogleSheetData() {
     try {
@@ -333,25 +378,73 @@ function closeEditModal() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
-async function saveEdit() {
-    const receiptId = document.getElementById('editReceiptId').value.trim();
-    if (!receiptId) {
-        showStatus('Missing receipt ID', 'error');
+// Edit Modal Logic - Advanced with validation, add, delete, search
+let cachedPayments = [];
+
+function generateReceiptId() {
+    return 'RCP' + Date.now().toString().slice(-8);
+}
+
+function openAddModal() {
+    const modal = document.getElementById('addModal');
+    if (!modal) return;
+
+    document.getElementById('addEmail').value = '';
+    document.getElementById('addName').value = '';
+    document.getElementById('addAmount').value = '';
+    document.getElementById('addDueAmount').value = '0';
+    document.getElementById('addDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('addDescription').value = '';
+
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeAddModal() {
+    const modal = document.getElementById('addModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+async function addNewReceipt() {
+    const email = document.getElementById('addEmail').value.trim();
+    const name = document.getElementById('addName').value.trim();
+    const amount = document.getElementById('addAmount').value.trim();
+    const dueAmount = document.getElementById('addDueAmount').value.trim();
+    const date = document.getElementById('addDate').value;
+    const description = document.getElementById('addDescription').value.trim();
+
+    if (!email || !name || !amount || !date) {
+        showStatus('❌ Please fill all required fields', 'error');
         return;
     }
 
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showStatus('❌ Invalid email address', 'error');
+        return;
+    }
+
+    const receiptId = generateReceiptId();
+    const amountNum = parseFloat(amount);
+    const dueNum = parseFloat(dueAmount || '0');
+    const paidAmount = amountNum - dueNum;
+    const paymentStatus = dueNum === 0 ? 'PAID' : 'DUE';
+
     const payload = {
         receiptId,
-        email: document.getElementById('editEmail').value.trim(),
-        Name: document.getElementById('editName').value.trim(),
-        Amount: document.getElementById('editAmount').value.trim(),
-        'Due Amount': document.getElementById('editDueAmount').value.trim(),
-        Date: document.getElementById('editDate').value,
-        Description: document.getElementById('editDescription').value.trim()
+        email,
+        Name: name,
+        Amount: amount,
+        'Due Amount': dueAmount || '0',
+        Date: date,
+        Description: description,
+        Payment_Status: paymentStatus,
+        Amount_Paid: `¥${paidAmount.toFixed(2)}`
     };
 
     try {
-        showStatus('Saving changes...', 'info');
+        showStatus('⏳ Creating receipt...', 'info');
         const response = await fetch(GOOGLE_SHEET_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -359,16 +452,168 @@ async function saveEdit() {
         });
 
         if (!response.ok) {
-            showStatus('Save failed', 'error');
+            showStatus('❌ Failed to create receipt', 'error');
+            return;
+        }
+
+        closeAddModal();
+        showStatus(`✅ Receipt ${receiptId} created successfully`, 'success');
+        setTimeout(() => loadAllPayments(), 600);
+    } catch (error) {
+        showStatus('❌ Error: ' + error.message, 'error');
+    }
+}
+
+function openEditModal(payment) {
+    const modal = document.getElementById('editModal');
+    if (!modal) return;
+
+    document.getElementById('editReceiptId').value = payment['Receipt No'] || '';
+    document.getElementById('editReceiptNo').textContent = payment['Receipt No'] || '';
+    document.getElementById('editEmail').value = payment['Recipient Email'] || '';
+    document.getElementById('editName').value = payment.Name || '';
+    document.getElementById('editAmount').value = payment.Amount || '';
+    document.getElementById('editDueAmount').value = payment['Due Amount'] || '';
+    document.getElementById('editDate').value = payment.Date || '';
+    document.getElementById('editDescription').value = payment.Description || '';
+
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeEditModal() {
+    const modal = document.getElementById('editModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+async function saveEdit() {
+    const receiptId = document.getElementById('editReceiptId').value.trim();
+    if (!receiptId) {
+        showStatus('❌ Missing receipt ID', 'error');
+        return;
+    }
+
+    const email = document.getElementById('editEmail').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showStatus('❌ Invalid email address', 'error');
+        return;
+    }
+
+    const amount = document.getElementById('editAmount').value.trim();
+    const dueAmount = document.getElementById('editDueAmount').value.trim();
+
+    if (!amount) {
+        showStatus('❌ Amount cannot be empty', 'error');
+        return;
+    }
+
+    const amountNum = parseFloat(amount);
+    const dueNum = parseFloat(dueAmount || '0');
+    const paidAmount = amountNum - dueNum;
+    const paymentStatus = dueNum === 0 ? 'PAID' : 'DUE';
+
+    const payload = {
+        receiptId,
+        email,
+        Name: document.getElementById('editName').value.trim(),
+        Amount: amount,
+        'Due Amount': dueAmount || '0',
+        Date: document.getElementById('editDate').value,
+        Description: document.getElementById('editDescription').value.trim(),
+        Payment_Status: paymentStatus,
+        Amount_Paid: `¥${paidAmount.toFixed(2)}`
+    };
+
+    try {
+        showStatus('⏳ Saving changes...', 'info');
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            showStatus('❌ Save failed', 'error');
             return;
         }
 
         closeEditModal();
-        showStatus('Receipt updated successfully', 'success');
+        showStatus('✅ Receipt updated successfully', 'success');
         setTimeout(() => loadAllPayments(), 600);
     } catch (error) {
-        showStatus('Save failed: ' + error.message, 'error');
+        showStatus('❌ Save failed: ' + error.message, 'error');
     }
+}
+
+async function deleteReceipt() {
+    const receiptId = document.getElementById('editReceiptId').value.trim();
+    if (!receiptId) {
+        showStatus('❌ Missing receipt ID', 'error');
+        return;
+    }
+
+    if (!confirm(`⚠️ Are you sure you want to delete Receipt #${receiptId}? This action cannot be undone.`)) {
+        return;
+    }
+
+    try {
+        showStatus('⏳ Deleting receipt...', 'info');
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ receiptId, action: 'delete' })
+        });
+
+        if (!response.ok) {
+            showStatus('❌ Delete failed', 'error');
+            return;
+        }
+
+        closeEditModal();
+        showStatus('✅ Receipt deleted successfully', 'success');
+        setTimeout(() => loadAllPayments(), 600);
+    } catch (error) {
+        showStatus('❌ Delete failed: ' + error.message, 'error');
+    }
+}
+
+function filterPayments() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        const groupedByRecipient = {};
+        cachedPayments.forEach(payment => {
+            const email = payment['Recipient Email'] || payment.Name || 'Unknown';
+            if (!groupedByRecipient[email]) {
+                groupedByRecipient[email] = [];
+            }
+            groupedByRecipient[email].push(payment);
+        });
+        displayPayments(Object.entries(groupedByRecipient));
+        return;
+    }
+
+    const filtered = cachedPayments.filter(p => 
+        String(p['Recipient Email'] || '').toLowerCase().includes(searchTerm) ||
+        String(p.Name || '').toLowerCase().includes(searchTerm)
+    );
+
+    if (filtered.length === 0) {
+        document.getElementById('allPayments').innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">🔍 No receipts found matching your search.</p>';
+        return;
+    }
+
+    const groupedByRecipient = {};
+    filtered.forEach(payment => {
+        const email = payment['Recipient Email'] || payment.Name || 'Unknown';
+        if (!groupedByRecipient[email]) {
+            groupedByRecipient[email] = [];
+        }
+        groupedByRecipient[email].push(payment);
+    });
+    displayPayments(Object.entries(groupedByRecipient));
 }
 
 async function refreshCache() {
@@ -387,8 +632,14 @@ document.addEventListener('click', async (event) => {
         if (payment) {
             openEditModal(payment);
         } else {
-            showStatus('Receipt not found in cache', 'error');
+            showStatus('❌ Receipt not found in cache', 'error');
         }
+    }
+});
+
+document.addEventListener('input', (event) => {
+    if (event.target.id === 'searchInput') {
+        filterPayments();
     }
 });
 

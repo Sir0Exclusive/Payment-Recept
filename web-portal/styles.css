@@ -245,6 +245,10 @@ button:hover {
     margin-top: 16px;
 }
 
+.read-only-field {
+    margin-bottom: 16px;
+}
+
 .error-msg {
     color: #e74c3c;
     text-align: center;
