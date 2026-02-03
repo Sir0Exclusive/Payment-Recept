@@ -388,29 +388,6 @@ function showStatus(message, type) {
 // Edit Modal Logic
 let cachedPayments = [];
 
-function openEditModal(payment) {
-    const modal = document.getElementById('editModal');
-    if (!modal) return;
-
-    document.getElementById('editReceiptId').value = payment['Receipt No'] || '';
-    document.getElementById('editEmail').value = payment['Recipient Email'] || '';
-    document.getElementById('editName').value = payment.Name || '';
-    document.getElementById('editAmount').value = payment.Amount || '';
-    document.getElementById('editDueAmount').value = payment['Due Amount'] || '';
-    document.getElementById('editDate').value = payment.Date || '';
-    document.getElementById('editDescription').value = payment.Description || '';
-
-    modal.classList.add('show');
-    modal.setAttribute('aria-hidden', 'false');
-}
-
-function closeEditModal() {
-    const modal = document.getElementById('editModal');
-    if (!modal) return;
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden', 'true');
-}
-
 // Edit Modal Logic - Advanced with validation, add, delete, search
 function generateReceiptId() {
     return 'RCP' + Date.now().toString().slice(-8);
@@ -427,14 +404,14 @@ function openAddModal() {
     document.getElementById('addDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('addDescription').value = '';
 
-    modal.classList.add('show');
+    modal.style.display = 'flex';
     modal.setAttribute('aria-hidden', 'false');
 }
 
 function closeAddModal() {
     const modal = document.getElementById('addModal');
     if (!modal) return;
-    modal.classList.remove('show');
+    modal.style.display = 'none';
     modal.setAttribute('aria-hidden', 'true');
 }
 
@@ -525,14 +502,14 @@ function openEditModal(payment) {
     document.getElementById('editDate').value = payment.Date || '';
     document.getElementById('editDescription').value = payment.Description || '';
 
-    modal.classList.add('show');
+    modal.style.display = 'flex';
     modal.setAttribute('aria-hidden', 'false');
 }
 
 function closeEditModal() {
     const modal = document.getElementById('editModal');
     if (!modal) return;
-    modal.classList.remove('show');
+    modal.style.display = 'none';
     modal.setAttribute('aria-hidden', 'true');
 }
 
@@ -731,6 +708,14 @@ document.addEventListener('input', (event) => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
+    // Show payments tab by default
+    const paymentsPanel = document.getElementById('adminPanel');
+    if (paymentsPanel) paymentsPanel.style.display = 'block';
+    
+    // Setup event listeners
+    setupRecipientDropdown();
+    
+    // Load initial data
     refreshCache();
     loadRecipients();
 });
@@ -740,7 +725,7 @@ window.addEventListener('DOMContentLoaded', () => {
 let allRecipients = [];
 
 // Tab switching
-function switchTab(tab) {
+function switchTab(tab, event) {
     const recipientsPanel = document.getElementById('recipientsPanel');
     const paymentsPanel = document.getElementById('adminPanel');
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -750,12 +735,12 @@ function switchTab(tab) {
     if (tab === 'recipients') {
         recipientsPanel.classList.add('active');
         paymentsPanel.classList.remove('active');
-        event.target.classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
         loadRecipients();
     } else {
         recipientsPanel.classList.remove('active');
         paymentsPanel.classList.add('active');
-        event.target.classList.add('active');
+        if (event && event.target) event.target.classList.add('active');
         refreshCache();
     }
 }
@@ -841,6 +826,8 @@ function formatDate(dateStr) {
 // Update recipient dropdown in add payment modal
 function updateRecipientDropdown(recipients) {
     const select = document.getElementById('addEmail');
+    if (!select) return;
+    
     select.innerHTML = '<option value="">Select recipient...</option>';
     
     recipients.forEach(recipient => {
@@ -851,13 +838,20 @@ function updateRecipientDropdown(recipients) {
         option.dataset.name = name;
         select.appendChild(option);
     });
+}
 
-    // Auto-fill name when recipient selected
+// Setup recipient dropdown change handler (called once on init)
+function setupRecipientDropdown() {
+    const select = document.getElementById('addEmail');
+    if (!select) return;
+    
     select.addEventListener('change', (e) => {
         const selectedOption = e.target.options[e.target.selectedIndex];
         const nameInput = document.getElementById('addName');
         if (selectedOption.dataset.name) {
             nameInput.value = selectedOption.dataset.name;
+        } else {
+            nameInput.value = '';
         }
     });
 }
