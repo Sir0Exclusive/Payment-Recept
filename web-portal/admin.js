@@ -3,13 +3,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofB
 let recipients = [];
 let payments = [];
 
-// Check authentication
-if (!requireAuth('admin')) {
-    throw new Error('Not authenticated');
-}
-
 // Load data on page load
 window.addEventListener('DOMContentLoaded', () => {
+    // Check authentication
+    if (!requireAuth('admin')) {
+        return;
+    }
+    
     showSection('recipients');
     loadRecipients();
     loadPayments();

@@ -1,17 +1,17 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec';
 
-// Check authentication
-if (!requireAuth('recipient')) {
-    throw new Error('Not authenticated');
-}
-
-const session = getSession();
-document.getElementById('welcomeText').textContent = `Welcome, ${session.name}!`;
-
 let myPayments = [];
 
 // Load payments on page load
 window.addEventListener('DOMContentLoaded', () => {
+    // Check authentication
+    if (!requireAuth('recipient')) {
+        return;
+    }
+    
+    const session = getSession();
+    document.getElementById('welcomeText').textContent = `Welcome, ${session.name}!`;
+    
     loadMyPayments();
 });
 
