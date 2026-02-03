@@ -23,6 +23,7 @@
             </div>
             <div class="admin-toolbar">
                 <button class="btn btn-success" onclick="openAddModal()" style="width: auto; margin: 0;">➕ Add New Receipt</button>
+                <button class="btn btn-info" onclick="exportFilteredData()" style="width: auto; margin: 0;">💾 Export Filtered</button>
             </div>
             <input type="file" id="excelUpload" accept=".xlsx,.xls" style="display: none" onchange="uploadExcel(event)">
         </header>
@@ -132,5 +133,9 @@
     <script src="auth.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="admin.js"></script>
+    <script>
+        // Setup session timeout for admin dashboard
+        setupSessionTimeout();
+    </script>
 </body>
 </html>

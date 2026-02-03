@@ -17,5 +17,11 @@
     </div>
     <script src="auth.js"></script>
     <script src="verify.js"></script>
+    <script>
+        // Setup session timeout when user is logged in
+        if (isLoggedIn()) {
+            setupSessionTimeout();
+        }
+    </script>
 </body>
 </html>

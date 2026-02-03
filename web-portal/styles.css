@@ -129,6 +129,10 @@ button:hover {
     background: #ff6b6b;
 }
 
+.btn-info {
+    background: #17a2b8;
+}
+
 .stats-section {
     margin: 20px 0 10px;
 }

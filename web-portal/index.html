@@ -33,5 +33,11 @@
     </div>
     <script src="auth.js"></script>
     <script src="app.js"></script>
+    <script>
+        // Initialize session timeout on page load
+        if (isLoggedIn()) {
+            setupSessionTimeout();
+        }
+    </script>
 </body>
 </html>

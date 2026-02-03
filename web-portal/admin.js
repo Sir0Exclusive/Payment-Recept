@@ -2,11 +2,35 @@
 const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyIekZfn_WnbZrj7NV3wofBF5YhIAx5E1yev_tVzb1mGRvmifLqDqdrg0eUwT7zZyhRFg/exec";
 const ADMIN_EMAIL = "sarwaroffjp@gmail.com";
 
+// Input sanitization to prevent injection attacks
+function sanitizeInput(input) {
+    return String(input)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .trim();
+}
+
+// Validate email format
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(String(email).toLowerCase());
+}
+
+// Validate numeric input
+function isValidAmount(amount) {
+    const num = parseFloat(amount);
+    return !isNaN(num) && num >= 0;
+}
+
 // Check if user is admin
 function isAdmin() {
     const currentUser = getCurrentUser();
     return currentUser && currentUser.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 }
+
 
 // Check authentication
 if (!isLoggedIn()) {
@@ -420,8 +444,18 @@ async function addNewReceipt() {
         return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isValidEmail(email)) {
         showStatus('❌ Invalid email address', 'error');
+        return;
+    }
+
+    if (!isValidAmount(amount)) {
+        showStatus('❌ Amount must be a valid positive number', 'error');
+        return;
+    }
+
+    if (dueAmount && !isValidAmount(dueAmount)) {
+        showStatus('❌ Due amount must be a valid positive number', 'error');
         return;
     }
 
@@ -433,12 +467,12 @@ async function addNewReceipt() {
 
     const payload = {
         receiptId,
-        email,
-        Name: name,
-        Amount: amount,
-        'Due Amount': dueAmount || '0',
+        email: sanitizeInput(email),
+        Name: sanitizeInput(name),
+        Amount: parseFloat(amount).toString(),
+        'Due Amount': parseFloat(dueAmount || '0').toString(),
         Date: date,
-        Description: description,
+        Description: sanitizeInput(description),
         Payment_Status: paymentStatus,
         Amount_Paid: `¥${paidAmount.toFixed(2)}`
     };
@@ -496,7 +530,7 @@ async function saveEdit() {
     }
 
     const email = document.getElementById('editEmail').value.trim();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email || !isValidEmail(email)) {
         showStatus('❌ Invalid email address', 'error');
         return;
     }
@@ -504,8 +538,13 @@ async function saveEdit() {
     const amount = document.getElementById('editAmount').value.trim();
     const dueAmount = document.getElementById('editDueAmount').value.trim();
 
-    if (!amount) {
-        showStatus('❌ Amount cannot be empty', 'error');
+    if (!amount || !isValidAmount(amount)) {
+        showStatus('❌ Amount must be a valid positive number', 'error');
+        return;
+    }
+
+    if (dueAmount && !isValidAmount(dueAmount)) {
+        showStatus('❌ Due amount must be a valid positive number', 'error');
         return;
     }
 
@@ -516,12 +555,12 @@ async function saveEdit() {
 
     const payload = {
         receiptId,
-        email,
-        Name: document.getElementById('editName').value.trim(),
-        Amount: amount,
-        'Due Amount': dueAmount || '0',
+        email: sanitizeInput(email),
+        Name: sanitizeInput(document.getElementById('editName').value.trim()),
+        Amount: parseFloat(amount).toString(),
+        'Due Amount': parseFloat(dueAmount || '0').toString(),
         Date: document.getElementById('editDate').value,
-        Description: document.getElementById('editDescription').value.trim(),
+        Description: sanitizeInput(document.getElementById('editDescription').value.trim()),
         Payment_Status: paymentStatus,
         Amount_Paid: `¥${paidAmount.toFixed(2)}`
     };
@@ -566,14 +605,21 @@ async function deleteReceipt() {
             body: JSON.stringify({ receiptId, action: 'delete' })
         });
 
-        if (!response.ok) {
-            showStatus('❌ Delete failed', 'error');
-            return;
+        const result = await response.text();
+        
+        if (result.includes('DELETED') || result.includes('OK')) {
+            closeEditModal();
+            showStatus('✅ Receipt deleted successfully!', 'success');
+            setTimeout(() => loadAllPayments(), 600);
+        } else if (result.includes('NOT_FOUND')) {
+            showStatus('⚠️ Receipt not found - may have been deleted already', 'warning');
+            setTimeout(() => {
+                closeEditModal();
+                loadAllPayments();
+            }, 800);
+        } else {
+            showStatus('❌ Delete failed: ' + result, 'error');
         }
-
-        closeEditModal();
-        showStatus('✅ Receipt deleted successfully', 'success');
-        setTimeout(() => loadAllPayments(), 600);
     } catch (error) {
         showStatus('❌ Delete failed: ' + error.message, 'error');
     }
@@ -619,6 +665,26 @@ function filterPayments() {
 async function refreshCache() {
     const sheetData = await fetchGoogleSheetData();
     cachedPayments = sheetData || [];
+}
+
+function exportFilteredData() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const filtered = cachedPayments.filter(p => {
+        const email = String(p['Recipient Email'] || '').toLowerCase();
+        const name = String(p.Name || '').toLowerCase();
+        return email.includes(searchTerm) || name.includes(searchTerm);
+    });
+
+    if (filtered.length === 0) {
+        showStatus('❌ No results to export', 'warning');
+        return;
+    }
+
+    const ws = XLSX.utils.json_to_sheet(filtered);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Filtered Results');
+    XLSX.writeFile(wb, `receipts-export-${new Date().getTime()}.xlsx`);
+    showStatus(`✅ Exported ${filtered.length} receipt(s) successfully`, 'success');
 }
 
 document.addEventListener('click', async (event) => {
