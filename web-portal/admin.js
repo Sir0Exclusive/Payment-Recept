@@ -31,7 +31,7 @@ async function loadRecipients() {
             throw new Error(text);
         }
         const data = await response.json();
-        if (data.status === 'success') {
+        if (data && Array.isArray(data.rows)) {
             recipients = data.rows;
             displayRecipients();
             updateRecipientDropdown();
@@ -154,7 +154,7 @@ async function loadPayments() {
             throw new Error(text);
         }
         const data = await response.json();
-        if (data.status === 'success') {
+        if (data && Array.isArray(data.rows)) {
             payments = data.rows;
             displayPayments();
         } else {
