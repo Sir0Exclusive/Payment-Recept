@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dashboard">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>🔐 Admin Dashboard</h1>
+            <button onclick="logout()" class="btn btn-danger">Logout</button>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="toolbar">
+                <button onclick="showSection('recipients')" class="btn btn-primary">👥 Manage Recipients</button>
+                <button onclick="showSection('payments')" class="btn btn-success">💳 Manage Payments</button>
+            </div>
+
+            <!-- Recipients Section -->
+            <div id="recipientsSection" style="display:none;">
+                <h2>Recipients Management</h2>
+                <button onclick="openAddRecipientModal()" class="btn btn-success">➕ Add Recipient</button>
+                <div id="recipientsList"></div>
+            </div>
+
+            <!-- Payments Section -->
+            <div id="paymentsSection" style="display:none;">
+                <h2>Payments Management</h2>
+                <button onclick="openAddPaymentModal()" class="btn btn-success">➕ Add Payment</button>
+                <div id="paymentsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Recipient Modal -->
+    <div id="addRecipientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Recipient</h2>
+                <button class="modal-close" onclick="closeAddRecipientModal()">×</button>
+            </div>
+            <form id="addRecipientForm">
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="recipientEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="recipientName" required>
+                </div>
+                <div class="form-group">
+                    <label>Password * (min 6 characters)</label>
+                    <input type="password" id="recipientPassword" required minlength="6">
+                </div>
+                <div id="recipientMessage"></div>
+                <button type="submit" class="btn btn-success btn-full">Create Recipient</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Payment Modal -->
+    <div id="addPaymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Payment</h2>
+                <button class="modal-close" onclick="closeAddPaymentModal()">×</button>
+            </div>
+            <form id="addPaymentForm">
+                <div class="form-group">
+                    <label>Recipient Email *</label>
+                    <select id="paymentEmail" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" id="paymentName" required>
+                </div>
+                <div class="form-group">
+                    <label>Amount (¥) *</label>
+                    <input type="number" id="paymentAmount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Due Amount (¥)</label>
+                    <input type="number" id="paymentDue" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" id="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="paymentDescription">
+                </div>
+                <div id="paymentMessage"></div>
+                <button type="submit" class="btn btn-success btn-full">Create Payment</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

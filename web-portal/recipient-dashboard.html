@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Payments</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dashboard">
+    <div class="container">
+        <div class="dashboard-header">
+            <div>
+                <h1>💳 My Payments</h1>
+                <p id="welcomeText"></p>
+            </div>
+            <button onclick="logout()" class="btn btn-danger">Logout</button>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="totalPayments">0</h3>
+                    <p>Total Payments</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="paidCount">0</h3>
+                    <p>Paid</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="dueCount">0</h3>
+                    <p>Due</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="totalAmount">¥0</h3>
+                    <p>Total Amount</p>
+                </div>
+            </div>
+
+            <div class="payment-list">
+                <h2>Payment History</h2>
+                <div id="paymentsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="recipient-dashboard.js"></script>
+</body>
+</html>
