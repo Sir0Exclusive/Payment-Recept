@@ -25,12 +25,18 @@ function showSection(section) {
 async function loadRecipients() {
     try {
         const response = await fetch(`${API_URL}?action=get_recipients`);
-        
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(text);
+        }
         const data = await response.json();
         if (data.status === 'success') {
             recipients = data.rows;
             displayRecipients();
             updateRecipientDropdown();
+        } else {
+            throw new Error('Failed to load recipients');
         }
     } catch (error) {
         console.error('Load recipients error:', error);
@@ -142,11 +148,17 @@ async function deleteRecipient(email) {
 async function loadPayments() {
     try {
         const response = await fetch(API_URL);
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(text);
+        }
         const data = await response.json();
-        
         if (data.status === 'success') {
             payments = data.rows;
             displayPayments();
+        } else {
+            throw new Error('Failed to load payments');
         }
     } catch (error) {
         console.error('Load payments error:', error);
