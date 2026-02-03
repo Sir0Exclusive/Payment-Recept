@@ -20,8 +20,12 @@ async function loadUserReceipts(email) {
 
             if (userReceipts.length === 0) {
                 receiptsList.innerHTML = '<p>No payments found for your account.</p>';
+                updateUserStats([], email);
                 return;
             }
+
+            // Update statistics
+            updateUserStats(userReceipts, email);
 
             const userData = userReceipts.map(row => ({
                 id: row['Receipt No'] || 'N/A',
@@ -30,12 +34,30 @@ async function loadUserReceipts(email) {
 
             receiptsList.innerHTML = userData.map(receipt => `
                 <div class="receipt-card">
-                    <h3>${receipt.data.Name}</h3>
-                    <p><strong>Total Amount:</strong> ${receipt.data.Amount}</p>
-                    <p><strong>Amount Due:</strong> ${receipt.data['Due Amount']}</p>
-                    <p><strong>Amount Paid:</strong> <span style="color: #00b050; font-weight: bold;">${receipt.data.Amount_Paid || 'N/A'}</span></p>
-                    <p><strong>Payment Status:</strong> <span style="color: ${receipt.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'}; font-weight: bold; font-size: 16px;">${receipt.data.Payment_Status || 'N/A'}</span></p>
-                    <p style="font-size: 12px; color: #999;">Date: ${receipt.data.Date}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="margin: 0;">Receipt #${receipt.data['Receipt No']}</h4>
+                        <span style="font-weight: 700; font-size: 13px; color: ${receipt.data.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${receipt.data.Payment_Status || 'N/A'}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Description:</span>
+                        <span class="value">${receipt.data.Name}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Total Amount:</span>
+                        <span class="value">¥${parseFloat(receipt.data.Amount || '0').toFixed(2)}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Amount Due:</span>
+                        <span class="value" style="color: #ff6b6b;">¥${parseFloat(receipt.data['Due Amount'] || '0').toFixed(2)}</span>
+                    </div>
+                    <div class="receipt-detail">
+                        <span class="label">Amount Paid:</span>
+                        <span class="value" style="color: #00b050; font-weight: bold;">¥${parseFloat(receipt.data.Amount_Paid?.replace(/[^0-9.-]/g, '') || '0').toFixed(2)}</span>
+                    </div>
+                    <div class="receipt-detail" style="font-size: 12px; color: #999;">
+                        <span class="label">Date:</span>
+                        <span class="value">${receipt.data.Date || 'N/A'}</span>
+                    </div>
                 </div>
             `).join('');
             return;
@@ -47,6 +69,7 @@ async function loadUserReceipts(email) {
     // Fallback: Load from local receipts
     if (!users[email] || users[email].receipts.length === 0) {
         receiptsList.innerHTML = '<p>No payments found.</p>';
+        updateUserStats([], email);
         return;
     }
 
@@ -151,3 +174,24 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+function updateUserStats(userReceipts, email) {
+    const totalCount = userReceipts.length;
+    let totalDueAmount = 0;
+    let totalPaidAmount = 0;
+
+    userReceipts.forEach(receipt => {
+        const due = parseFloat(String(receipt['Due Amount'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+        const paid = parseFloat(String(receipt.Amount_Paid || '0').replace(/[^0-9.-]/g, '')) || 0;
+        totalDueAmount += due;
+        totalPaidAmount += paid;
+    });
+
+    const statTotal = document.getElementById('userStatTotal');
+    const statDue = document.getElementById('userStatDue');
+    const statPaid = document.getElementById('userStatPaid');
+
+    if (statTotal) statTotal.textContent = totalCount;
+    if (statDue) statDue.textContent = `¥${totalDueAmount.toFixed(2)}`;
+    if (statPaid) statPaid.textContent = `¥${totalPaidAmount.toFixed(2)}`;
+}

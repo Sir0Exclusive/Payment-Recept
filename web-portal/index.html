@@ -24,11 +24,38 @@
         </div>
 
         <div class="dashboard" id="dashboard" style="display: none;">
-            <h2>Your Receipts</h2>
-            <p>Welcome, <span id="userEmail"></span>!</p>
-            <button onclick="logout()">Logout</button>
-            <button onclick="window.location.href='admin-login.html'" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; margin-left: 10px; border-radius: 5px; cursor: pointer;" id="adminBtn">Admin Dashboard</button>
-            <div id="receiptsList"></div>
+            <div class="admin-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px; border-radius: 8px; margin-bottom: 20px; color: white;">
+                <div>
+                    <h2 style="margin: 0; color: white;">Payment Dashboard</h2>
+                    <p class="muted" style="color: rgba(255,255,255,0.8); margin-top: 6px;">Welcome, <strong id="userEmail"></strong>!</p>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Payments</div>
+                        <div class="stat-value" id="userStatTotal">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Amount Due</div>
+                        <div class="stat-value" id="userStatDue">¥0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Amount Paid</div>
+                        <div class="stat-value" id="userStatPaid">¥0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button onclick="location.reload()" style="background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">🔄 Refresh</button>
+                <button onclick="logout()" style="background: #ff6b6b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Logout</button>
+                <button onclick="window.location.href='admin-login.html'" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" id="adminBtn">Admin Dashboard</button>
+            </div>
+
+            <h3>💳 Your Receipts</h3>
+            <div id="receiptsList" style="margin-top: 16px;"></div>
         </div>
     </div>
     <script src="auth.js"></script>
