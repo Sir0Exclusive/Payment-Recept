@@ -491,15 +491,22 @@ async function addNewReceipt() {
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            showStatus('❌ Failed to create receipt', 'error');
-            return;
-        }
+        const result = await response.text();
+        console.log('Response:', result);
 
-        closeAddModal();
-        showStatus(`✅ Receipt ${receiptId} created successfully`, 'success');
-        setTimeout(() => loadAllPayments(), 600);
+        if (result.includes('CREATED') || result.includes('UPDATED')) {
+            closeAddModal();
+            showStatus(`✅ Receipt ${receiptId} created successfully`, 'success');
+            setTimeout(() => loadAllPayments(), 600);
+        } else if (result.includes('Error') || result.includes('error')) {
+            showStatus(`❌ ${result}`, 'error');
+        } else {
+            showStatus(`✅ Receipt ${receiptId} created successfully`, 'success');
+            closeAddModal();
+            setTimeout(() => loadAllPayments(), 600);
+        }
     } catch (error) {
+        console.error('Add receipt error:', error);
         showStatus('❌ Error: ' + error.message, 'error');
     }
 }
@@ -579,16 +586,23 @@ async function saveEdit() {
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            showStatus('❌ Save failed', 'error');
-            return;
-        }
+        const result = await response.text();
+        console.log('Edit Response:', result);
 
-        closeEditModal();
-        showStatus('✅ Receipt updated successfully', 'success');
-        setTimeout(() => loadAllPayments(), 600);
+        if (result.includes('UPDATED') || result.includes('CREATED')) {
+            closeEditModal();
+            showStatus('✅ Receipt updated successfully', 'success');
+            setTimeout(() => loadAllPayments(), 600);
+        } else if (result.includes('Error') || result.includes('error')) {
+            showStatus(`❌ ${result}`, 'error');
+        } else {
+            closeEditModal();
+            showStatus('✅ Receipt updated successfully', 'success');
+            setTimeout(() => loadAllPayments(), 600);
+        }
     } catch (error) {
-        showStatus('❌ Save failed: ' + error.message, 'error');
+        console.error('Edit receipt error:', error);
+        showStatus('❌ Error: ' + error.message, 'error');
     }
 }
 
