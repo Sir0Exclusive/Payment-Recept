@@ -26,8 +26,8 @@ async function loadRecipients() {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-            body: JSON.stringify({ action: 'get_recipients' })
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({ action: 'get_recipients' })
         });
         
         const data = await response.json();
@@ -90,8 +90,8 @@ document.getElementById('addRecipientForm').addEventListener('submit', async (e)
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-            body: JSON.stringify({
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({
                 action: 'create_recipient',
                 email: email,
                 name: name,
@@ -121,8 +121,8 @@ async function deleteRecipient(email) {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-            body: JSON.stringify({
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({
                 action: 'delete_recipient',
                 email: email
             })
@@ -243,8 +243,8 @@ document.getElementById('addPaymentForm').addEventListener('submit', async (e) =
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-            body: JSON.stringify({
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({
                 receiptId: receiptId,
                 email: email,
                 Name: name,
@@ -279,8 +279,8 @@ async function deletePayment(receiptId) {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-            body: JSON.stringify({
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({
                 action: 'delete',
                 receiptId: receiptId
             })

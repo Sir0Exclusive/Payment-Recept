@@ -74,9 +74,21 @@ function verifyPassword_(password, email, storedHash) {
   return computedHash === storedHash;
 }
 
+function parseRequest_(e) {
+  if (!e) return {};
+  if (e.postData && e.postData.contents) {
+    try {
+      return JSON.parse(e.postData.contents);
+    } catch (err) {
+      // fall back to parameters for form-encoded
+    }
+  }
+  return e.parameter || {};
+}
+
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
+    const data = parseRequest_(e);
     const action = String(data.action || '').trim();
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 

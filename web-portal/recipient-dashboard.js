@@ -19,8 +19,8 @@ async function loadMyPayments() {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-            body: JSON.stringify({
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: new URLSearchParams({
                 action: 'get_recipient_payments',
                 email: session.email
             })
