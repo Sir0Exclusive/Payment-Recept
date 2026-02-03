@@ -19,6 +19,7 @@ async function loadMyPayments() {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
             body: JSON.stringify({
                 action: 'get_recipient_payments',
                 email: session.email
@@ -255,11 +256,11 @@ function generateReceipt(receiptNo) {
                 </div>
             </div>
 
-            <div class="signature">
-                <div>
-                    <img src="signature.svg" alt="Signature" />
+                <div class="signature">
+                    <div>
+                        <img src="https://sir0exclusive.github.io/Payment-Recept/signature.png" alt="Signature" />
+                    </div>
                 </div>
-            </div>
 
             <button class="print-btn" onclick="window.print()">🖨️ Print Receipt</button>
 

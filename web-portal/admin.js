@@ -26,6 +26,7 @@ async function loadRecipients() {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
             body: JSON.stringify({ action: 'get_recipients' })
         });
         
@@ -89,6 +90,7 @@ document.getElementById('addRecipientForm').addEventListener('submit', async (e)
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
             body: JSON.stringify({
                 action: 'create_recipient',
                 email: email,
@@ -119,6 +121,7 @@ async function deleteRecipient(email) {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
             body: JSON.stringify({
                 action: 'delete_recipient',
                 email: email
@@ -240,6 +243,7 @@ document.getElementById('addPaymentForm').addEventListener('submit', async (e) =
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
             body: JSON.stringify({
                 receiptId: receiptId,
                 email: email,
@@ -275,6 +279,7 @@ async function deletePayment(receiptId) {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
             body: JSON.stringify({
                 action: 'delete',
                 receiptId: receiptId
