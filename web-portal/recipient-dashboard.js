@@ -19,7 +19,6 @@ async function loadMyPayments() {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'get_recipient_payments',
                 email: session.email
