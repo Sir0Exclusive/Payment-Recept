@@ -424,7 +424,13 @@ async function addNewReceipt() {
     // Check both dropdown and manual input for email
     const emailSelect = document.getElementById('addEmailSelect');
     const emailInput = document.getElementById('addEmail');
-    const email = emailSelect?.value || emailInput?.value.trim() || '';
+    
+    let email = '';
+    if (emailSelect && emailSelect.value) {
+        email = emailSelect.value.trim();
+    } else if (emailInput && emailInput.value) {
+        email = emailInput.value.trim();
+    }
     
     const name = document.getElementById('addName').value.trim();
     const amount = document.getElementById('addAmount').value.trim();
