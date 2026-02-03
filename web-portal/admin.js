@@ -46,12 +46,24 @@ function verifyAdminAccess() {
     return true;
 }
 
-// Run verification when DOM is ready
+// Run verification and initialization when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     if (verifyAdminAccess()) {
         loadAllPayments();
+        
+        // Show payments tab by default
+        const paymentsPanel = document.getElementById('adminPanel');
+        if (paymentsPanel) paymentsPanel.style.display = 'block';
+        
+        // Setup event listeners
+        setupRecipientDropdown();
+        
+        // Load initial data
+        refreshCache();
+        loadRecipients();
     }
 });
+
 
 async function loadAllPayments() {
     const allPayments = document.getElementById('allPayments');
@@ -308,67 +320,7 @@ async function uploadExcel(event) {
 }
 
 // Generate All Receipts
-async function generateAllReceipts() {
-    showStatus('Generating receipts...', 'info');
-    
-    try {
-        const sheetData = await fetchGoogleSheetData();
-        
-        if (!sheetData || sheetData.length === 0) {
-            showStatus('No data to generate receipts from', 'error');
-            return;
-        }
 
-        showStatus(`${sheetData.length} receipts generated (simulation - requires backend)`, 'success');
-        // In real implementation, this would call Python backend to generate PDFs
-        
-    } catch (error) {
-        showStatus('Generation failed: ' + error.message, 'error');
-    }
-}
-
-// Seed Dummy Data
-async function seedDummyData() {
-    if (!isAdminSession()) {
-        showStatus('Admin session required', 'error');
-        return;
-    }
-
-    const confirmSeed = confirm('Add dummy data to Google Sheets? This will create multiple test receipts.');
-    if (!confirmSeed) return;
-
-    showStatus('Adding dummy data...', 'info');
-
-    const dummyData = [
-        { receiptId: '10001', email: 'sarwaroffjp@gmail.com', Name: 'Sarwar Admin', Amount: '¥5000', 'Due Amount': '0', Date: '2026-01-05', Description: 'Website Development', Payment_Status: 'PAID', Amount_Paid: '¥5000' },
-        { receiptId: '10002', email: 'sarwaroffjp@gmail.com', Name: 'Sarwar Admin', Amount: '¥3500', 'Due Amount': '500', Date: '2026-01-20', Description: 'Hosting Renewal', Payment_Status: 'DUE', Amount_Paid: '¥3000' },
-        { receiptId: '20001', email: 'john.doe@gmail.com', Name: 'John Doe', Amount: '¥1200', 'Due Amount': '0', Date: '2026-01-07', Description: 'Consulting Fee', Payment_Status: 'PAID', Amount_Paid: '¥1200' },
-        { receiptId: '20002', email: 'john.doe@gmail.com', Name: 'John Doe', Amount: '¥1800', 'Due Amount': '200', Date: '2026-01-28', Description: 'Monthly Service', Payment_Status: 'DUE', Amount_Paid: '¥1600' },
-        { receiptId: '30001', email: 'amina.khan@gmail.com', Name: 'Amina Khan', Amount: '¥2500', 'Due Amount': '0', Date: '2026-01-09', Description: 'Design Package', Payment_Status: 'PAID', Amount_Paid: '¥2500' },
-        { receiptId: '30002', email: 'amina.khan@gmail.com', Name: 'Amina Khan', Amount: '¥2200', 'Due Amount': '200', Date: '2026-01-22', Description: 'Brand Assets', Payment_Status: 'DUE', Amount_Paid: '¥2000' },
-        { receiptId: '40001', email: 'maria.garcia@gmail.com', Name: 'Maria Garcia', Amount: '¥4200', 'Due Amount': '0', Date: '2026-01-12', Description: 'Event Coverage', Payment_Status: 'PAID', Amount_Paid: '¥4200' },
-        { receiptId: '40002', email: 'maria.garcia@gmail.com', Name: 'Maria Garcia', Amount: '¥1900', 'Due Amount': '900', Date: '2026-01-30', Description: 'Extra Revisions', Payment_Status: 'DUE', Amount_Paid: '¥1000' },
-        { receiptId: '50001', email: 'ahmed.khan@gmail.com', Name: 'Ahmed Khan', Amount: '¥3000', 'Due Amount': '0', Date: '2026-01-15', Description: 'App Maintenance', Payment_Status: 'PAID', Amount_Paid: '¥3000' },
-        { receiptId: '50002', email: 'ahmed.khan@gmail.com', Name: 'Ahmed Khan', Amount: '¥2800', 'Due Amount': '400', Date: '2026-01-31', Description: 'Feature Upgrade', Payment_Status: 'DUE', Amount_Paid: '¥2400' }
-    ];
-
-    let success = 0;
-    let failed = 0;
-
-    for (const row of dummyData) {
-        const response = await fetch(GOOGLE_SHEET_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(row)
-        });
-
-        if (response.ok) success++;
-        else failed++;
-    }
-
-    showStatus(`Dummy data added: ${success} success, ${failed} failed`, success > 0 ? 'success' : 'error');
-    setTimeout(() => loadAllPayments(), 1000);
-}
 
 // Show status message
 function showStatus(message, type) {
@@ -638,43 +590,6 @@ async function deleteReceipt() {
     }
 }
 
-function filterPayments() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-    
-    if (!searchTerm) {
-        const groupedByRecipient = {};
-        cachedPayments.forEach(payment => {
-            const email = payment['Recipient Email'] || payment.Name || 'Unknown';
-            if (!groupedByRecipient[email]) {
-                groupedByRecipient[email] = [];
-            }
-            groupedByRecipient[email].push(payment);
-        });
-        displayPayments(Object.entries(groupedByRecipient));
-        return;
-    }
-
-    const filtered = cachedPayments.filter(p => 
-        String(p['Recipient Email'] || '').toLowerCase().includes(searchTerm) ||
-        String(p.Name || '').toLowerCase().includes(searchTerm)
-    );
-
-    if (filtered.length === 0) {
-        document.getElementById('allPayments').innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">🔍 No receipts found matching your search.</p>';
-        return;
-    }
-
-    const groupedByRecipient = {};
-    filtered.forEach(payment => {
-        const email = payment['Recipient Email'] || payment.Name || 'Unknown';
-        if (!groupedByRecipient[email]) {
-            groupedByRecipient[email] = [];
-        }
-        groupedByRecipient[email].push(payment);
-    });
-    displayPayments(Object.entries(groupedByRecipient));
-}
-
 async function refreshCache() {
     const sheetData = await fetchGoogleSheetData();
     cachedPayments = sheetData || [];
@@ -720,19 +635,6 @@ document.addEventListener('input', (event) => {
     if (event.target.id === 'searchInput') {
         filterPayments();
     }
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-    // Show payments tab by default
-    const paymentsPanel = document.getElementById('adminPanel');
-    if (paymentsPanel) paymentsPanel.style.display = 'block';
-    
-    // Setup event listeners
-    setupRecipientDropdown();
-    
-    // Load initial data
-    refreshCache();
-    loadRecipients();
 });
 
 // ==================== RECIPIENT MANAGEMENT ====================
