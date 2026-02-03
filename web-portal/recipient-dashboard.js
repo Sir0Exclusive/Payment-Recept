@@ -104,6 +104,7 @@ function generateReceipt(receiptNo) {
                     max-width: 800px;
                     margin: 40px auto;
                     padding: 20px;
+                    user-select: none;
                 }
                 .receipt-header {
                     text-align: center;
@@ -158,12 +159,56 @@ function generateReceipt(receiptNo) {
                     cursor: pointer;
                     margin-top: 20px;
                 }
+                .anti-copy {
+                    position: fixed;
+                    inset: 0;
+                    pointer-events: none;
+                    opacity: 0.08;
+                    z-index: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 64px;
+                    font-weight: 700;
+                    color: #111827;
+                    transform: rotate(-24deg);
+                }
+                .receipt-wrap {
+                    position: relative;
+                    z-index: 1;
+                }
+                .codes {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    margin: 20px 0;
+                    align-items: center;
+                }
+                .code-box {
+                    background: #f7fafc;
+                    padding: 15px;
+                    border-radius: 8px;
+                    text-align: center;
+                }
+                .signature {
+                    margin-top: 30px;
+                    display: flex;
+                    justify-content: flex-end;
+                }
+                .signature img {
+                    width: 220px;
+                    border-bottom: 2px solid #111827;
+                    padding-bottom: 6px;
+                }
                 @media print {
                     .print-btn { display: none; }
+                    body { user-select: text; }
                 }
             </style>
         </head>
-        <body>
+        <body oncontextmenu="return false;">
+            <div class="anti-copy">PAYMENT RECEIPT</div>
+            <div class="receipt-wrap">
             <div class="receipt-header">
                 <h1>💳 Payment Receipt</h1>
                 <p>Receipt #${receiptId}</p>
@@ -199,12 +244,51 @@ function generateReceipt(receiptNo) {
                 </div>
             </div>
 
+            <div class="codes">
+                <div class="code-box">
+                    <div><strong>QR Code</strong></div>
+                    <div id="qrCode"></div>
+                </div>
+                <div class="code-box">
+                    <div><strong>Barcode</strong></div>
+                    <svg id="barcode"></svg>
+                </div>
+            </div>
+
+            <div class="signature">
+                <div>
+                    <img src="signature.svg" alt="Signature" />
+                </div>
+            </div>
+
             <button class="print-btn" onclick="window.print()">🖨️ Print Receipt</button>
 
             <div style="text-align:center;color:#999;font-size:12px;margin-top:40px;padding-top:20px;border-top:1px solid #e2e8f0;">
                 <p>This is a computer-generated receipt.</p>
                 <p>Payment Receipt System © ${new Date().getFullYear()}</p>
             </div>
+            </div>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+            <script>
+                const qrData = JSON.stringify({
+                    receiptId: ${JSON.stringify(receiptId)},
+                    email: ${JSON.stringify(email)},
+                    amount: ${JSON.stringify(amount)},
+                    date: ${JSON.stringify(date)}
+                });
+                new QRCode(document.getElementById('qrCode'), {
+                    text: qrData,
+                    width: 140,
+                    height: 140
+                });
+                JsBarcode('#barcode', ${JSON.stringify(String(receiptId))}, {
+                    format: 'CODE128',
+                    width: 2,
+                    height: 60,
+                    displayValue: true
+                });
+            </script>
         </body>
         </html>
     `);
