@@ -3,7 +3,9 @@
 
 const SPREADSHEET_ID = '1Pelzk18wzP4ZjDbe8nV602UNiGIe45n3TOInrmxyr0M';
 const SHEET_NAME = 'Receipts';
+const RECIPIENTS_SHEET = 'Recipients';
 const HEADERS = ['Receipt No', 'Name', 'Amount', 'Due Amount', 'Date', 'Description', 'Recipient Email', 'Payment_Status', 'Amount_Paid', 'Last Updated'];
+const RECIPIENTS_HEADERS = ['Email', 'Name', 'PasswordHash', 'Created Date', 'Last Login'];
 
 function sanitizeInput_(value) {
   if (value === null || value === undefined) return '';
@@ -32,14 +34,64 @@ function ensureHeader_(sheet) {
   }
 }
 
+function ensureRecipientsHeader_(sheet) {
+  const lastCol = sheet.getLastColumn();
+  if (sheet.getLastRow() === 0 || lastCol === 0) {
+    sheet.appendRow(RECIPIENTS_HEADERS);
+    return;
+  }
+  const firstRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  if (firstRow.join('|') !== RECIPIENTS_HEADERS.join('|')) {
+    sheet.getRange(1, 1, 1, RECIPIENTS_HEADERS.length).setValues([RECIPIENTS_HEADERS]);
+  }
+}
+
+function hashPassword_(password, email) {
+  const salt = 'payment_receipt_salt_2026';
+  const input = password + email.toLowerCase() + salt;
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, input);
+  return Utilities.base64Encode(digest);
+}
+
+function verifyPassword_(password, email, storedHash) {
+  const computedHash = hashPassword_(password, email);
+  return computedHash === storedHash;
+}
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    const action = String(data.action || '').trim();
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+    // Handle recipient authentication
+    if (action === 'recipient_login') {
+      return handleRecipientLogin_(ss, data);
+    }
+
+    // Handle recipient creation
+    if (action === 'create_recipient') {
+      return handleCreateRecipient_(ss, data);
+    }
+
+    // Handle get recipient payments
+    if (action === 'get_recipient_payments') {
+      return handleGetRecipientPayments_(ss, data);
+    }
+
+    // Handle get all recipients
+    if (action === 'get_recipients') {
+      return handleGetRecipients_(ss);
+    }
+
+    // Handle delete recipient
+    if (action === 'delete_recipient') {
+      return handleDeleteRecipient_(ss, data);
+    }
+
+    // Existing payment record handling
     const receiptId = String(data.receiptId || data['Receipt No'] || '').trim();
     const email = String(data.email || data['Recipient Email'] || '').trim();
-    const action = String(data.action || '').trim();
-
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
     ensureHeader_(sheet);
 
@@ -167,5 +219,153 @@ function doGet(e) {
     }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// Handler functions for recipient management
+function handleRecipientLogin_(ss, data) {
+  const email = String(data.email || '').trim().toLowerCase();
+  const password = String(data.password || '');
+
+  if (!email || !validateEmail_(email)) {
+    return ContentService.createTextOutput('Invalid email');
+  }
+
+  if (!password) {
+    return ContentService.createTextOutput('Password required');
+  }
+
+  const sheet = ss.getSheetByName(RECIPIENTS_SHEET) || ss.insertSheet(RECIPIENTS_SHEET);
+  ensureRecipientsHeader_(sheet);
+  
+  const dataRange = sheet.getDataRange().getValues();
+  for (let i = 1; i < dataRange.length; i++) {
+    const rowEmail = String(dataRange[i][0]).trim().toLowerCase();
+    if (rowEmail === email) {
+      const storedHash = dataRange[i][2];
+      if (verifyPassword_(password, email, storedHash)) {
+        // Update last login
+        sheet.getRange(i + 1, 5).setValue(new Date().toISOString());
+        return ContentService.createTextOutput(JSON.stringify({
+          status: 'success',
+          email: email,
+          name: dataRange[i][1]
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      return ContentService.createTextOutput('Invalid password');
+    }
+  }
+  return ContentService.createTextOutput('User not found');
+}
+
+function handleCreateRecipient_(ss, data) {
+  const email = String(data.email || '').trim().toLowerCase();
+  const name = sanitizeInput_(data.name);
+  const password = String(data.password || '');
+
+  if (!email || !validateEmail_(email)) {
+    return ContentService.createTextOutput('Invalid email');
+  }
+
+  if (!name) {
+    return ContentService.createTextOutput('Name required');
+  }
+
+  if (!password || password.length < 6) {
+    return ContentService.createTextOutput('Password must be at least 6 characters');
+  }
+
+  const sheet = ss.getSheetByName(RECIPIENTS_SHEET) || ss.insertSheet(RECIPIENTS_SHEET);
+  ensureRecipientsHeader_(sheet);
+
+  // Check if recipient already exists
+  const dataRange = sheet.getDataRange().getValues();
+  for (let i = 1; i < dataRange.length; i++) {
+    if (String(dataRange[i][0]).trim().toLowerCase() === email) {
+      return ContentService.createTextOutput('Recipient already exists');
+    }
+  }
+
+  const passwordHash = hashPassword_(password, email);
+  const now = new Date().toISOString();
+  sheet.appendRow([email, name, passwordHash, now, '']);
+
+  return ContentService.createTextOutput('RECIPIENT_CREATED');
+}
+
+function handleGetRecipientPayments_(ss, data) {
+  const email = String(data.email || '').trim().toLowerCase();
+  
+  if (!email || !validateEmail_(email)) {
+    return ContentService.createTextOutput(JSON.stringify({
+      error: 'Invalid email',
+      status: 'error'
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    return ContentService.createTextOutput(JSON.stringify({
+      headers: HEADERS,
+      rows: [],
+      status: 'success'
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const dataRange = sheet.getDataRange().getValues();
+  const headers = dataRange.length > 0 ? dataRange[0] : HEADERS;
+  const emailColIndex = headers.indexOf('Recipient Email');
+  
+  const filteredRows = [];
+  for (let i = 1; i < dataRange.length; i++) {
+    if (String(dataRange[i][emailColIndex]).trim().toLowerCase() === email) {
+      filteredRows.push(dataRange[i]);
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({
+    headers: headers,
+    rows: filteredRows,
+    status: 'success'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleGetRecipients_(ss) {
+  const sheet = ss.getSheetByName(RECIPIENTS_SHEET) || ss.insertSheet(RECIPIENTS_SHEET);
+  ensureRecipientsHeader_(sheet);
+  
+  const dataRange = sheet.getDataRange().getValues();
+  const headers = dataRange.length > 0 ? dataRange[0] : RECIPIENTS_HEADERS;
+  const rows = dataRange.length > 1 ? dataRange.slice(1).filter(r => String(r[0] || '').trim()) : [];
+
+  // Remove password hashes from response
+  const sanitizedRows = rows.map(row => [row[0], row[1], row[3], row[4]]);
+
+  return ContentService.createTextOutput(JSON.stringify({
+    headers: ['Email', 'Name', 'Created Date', 'Last Login'],
+    rows: sanitizedRows,
+    status: 'success'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleDeleteRecipient_(ss, data) {
+  const email = String(data.email || '').trim().toLowerCase();
+  
+  if (!email) {
+    return ContentService.createTextOutput('Email required');
+  }
+
+  const sheet = ss.getSheetByName(RECIPIENTS_SHEET);
+  if (!sheet) {
+    return ContentService.createTextOutput('NOT_FOUND');
+  }
+
+  const dataRange = sheet.getDataRange().getValues();
+  for (let i = 1; i < dataRange.length; i++) {
+    if (String(dataRange[i][0]).trim().toLowerCase() === email) {
+      sheet.deleteRow(i + 1);
+      return ContentService.createTextOutput('DELETED');
+    }
+  }
+  return ContentService.createTextOutput('NOT_FOUND');
 }
 

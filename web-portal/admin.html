@@ -6,6 +6,44 @@
     <title>Admin Dashboard - Payment Receipts</title>
     <link rel="stylesheet" href="styles.css">
         <meta name="description" content="Admin dashboard for managing payment receipts">
+    <style>
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            border-bottom: 2px solid #e3e7ff;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover {
+            color: #667eea;
+        }
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        #recipientsPanel {
+            display: none;
+        }
+        #recipientsPanel.active {
+            display: block;
+        }
+    </style>
 </head>
 <body class="admin-page">
     <div class="container admin-container">
@@ -49,6 +87,20 @@
             </div>
         </section>
 
+        <div class="admin-tabs">
+            <button class="tab-btn active" onclick="switchTab('recipients')">👥 Manage Recipients</button>
+            <button class="tab-btn" onclick="switchTab('payments')">💳 Manage Payments</button>
+        </div>
+
+        <div id="recipientsPanel" class="tab-panel active">
+            <h2 class="section-title">Recipients Management</h2>
+            <div style="margin: 14px 0;">
+                <button class="btn btn-primary" onclick="openAddRecipientModal()">➕ Add New Recipient</button>
+            </div>
+            <div id="recipientsStatusMessage" class="status-message"></div>
+            <div id="allRecipients"></div>
+        </div>
+
         <div id="adminPanel">
             <h2 class="section-title">All Payments</h2>
             <div style="margin: 14px 0;">
@@ -56,6 +108,29 @@
             </div>
             <div id="statusMessage" class="status-message"></div>
             <div id="allPayments"></div>
+        </div>
+    </div>
+
+    <div id="addRecipientModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Recipient</h2>
+                <button class="modal-close" onclick="closeAddRecipientModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <label class="modal-label">Email *</label>
+                <input type="email" id="addRecipientEmail" placeholder="recipient@example.com" required>
+
+                <label class="modal-label">Name *</label>
+                <input type="text" id="addRecipientName" placeholder="Full Name" required>
+
+                <label class="modal-label">Password * (minimum 6 characters)</label>
+                <input type="password" id="addRecipientPassword" placeholder="Enter password" required minlength="6">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddRecipientModal()">Cancel</button>
+                <button class="btn btn-success" onclick="createRecipient()">Create Recipient</button>
+            </div>
         </div>
     </div>
 
@@ -67,10 +142,12 @@
             </div>
             <div class="modal-body">
                 <label class="modal-label">Recipient Email *</label>
-                <input type="email" id="addEmail" placeholder="customer@example.com" required>
+                <select id="addEmail" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px;">
+                    <option value="">Select recipient...</option>
+                </select>
 
                 <label class="modal-label">Name *</label>
-                <input type="text" id="addName" placeholder="Customer Name" required>
+                <input type="text" id="addName" placeholder="Customer Name" required readonly style="background: #f5f5f5;">
 
                 <label class="modal-label">Amount *</label>
                 <input type="number" id="addAmount" placeholder="5000" step="0.01" required>

@@ -121,6 +121,7 @@ function displayPayments(groupedEntries) {
                         <h4 style="margin: 0; color: #333;">Receipt #${payment['Receipt No']}</h4>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <span style="font-weight: 700; font-size: 14px; color: ${payment.Payment_Status === 'PAID' ? '#00b050' : '#ff6b6b'};">${payment.Payment_Status || 'N/A'}</span>
+                            <button class="btn btn-info" style="padding: 6px 12px;" onclick="generateReceiptForPayment('${payment['Receipt No']}')">📄 Receipt</button>
                             <button class="btn btn-primary" style="padding: 6px 12px;" data-edit-receipt="${payment['Receipt No']}">✏️ Edit</button>
                         </div>
                     </div>
@@ -731,4 +732,382 @@ document.addEventListener('input', (event) => {
 
 window.addEventListener('DOMContentLoaded', () => {
     refreshCache();
+    loadRecipients();
 });
+
+// ==================== RECIPIENT MANAGEMENT ====================
+
+let allRecipients = [];
+
+// Tab switching
+function switchTab(tab) {
+    const recipientsPanel = document.getElementById('recipientsPanel');
+    const paymentsPanel = document.getElementById('adminPanel');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+
+    if (tab === 'recipients') {
+        recipientsPanel.classList.add('active');
+        paymentsPanel.classList.remove('active');
+        event.target.classList.add('active');
+        loadRecipients();
+    } else {
+        recipientsPanel.classList.remove('active');
+        paymentsPanel.classList.add('active');
+        event.target.classList.add('active');
+        refreshCache();
+    }
+}
+
+// Load all recipients
+async function loadRecipients() {
+    try {
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'get_recipients' })
+        });
+
+        const data = await response.json();
+        console.log('Recipients:', data);
+
+        if (data.status === 'success') {
+            allRecipients = data.rows;
+            displayRecipients(allRecipients);
+            updateRecipientDropdown(allRecipients);
+        } else {
+            showRecipientsStatus('❌ Failed to load recipients', 'error');
+        }
+    } catch (error) {
+        console.error('Load recipients error:', error);
+        showRecipientsStatus('❌ Error: ' + error.message, 'error');
+    }
+}
+
+// Display recipients table
+function displayRecipients(recipients) {
+    const container = document.getElementById('allRecipients');
+    
+    if (recipients.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No recipients found. Add your first recipient above.</p>';
+        return;
+    }
+
+    let html = `
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Created Date</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    recipients.forEach(recipient => {
+        const [email, name, createdDate, lastLogin] = recipient;
+        html += `
+            <tr>
+                <td>${email}</td>
+                <td><strong>${name}</strong></td>
+                <td>${formatDate(createdDate)}</td>
+                <td>${lastLogin ? formatDate(lastLogin) : 'Never'}</td>
+                <td>
+                    <button class="btn-sm btn-primary" onclick="viewRecipientPayments('${email}')">📋 Payments</button>
+                    <button class="btn-sm btn-danger" onclick="deleteRecipientConfirm('${email}')">🗑️ Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+        return dateStr;
+    }
+}
+
+// Update recipient dropdown in add payment modal
+function updateRecipientDropdown(recipients) {
+    const select = document.getElementById('addEmail');
+    select.innerHTML = '<option value="">Select recipient...</option>';
+    
+    recipients.forEach(recipient => {
+        const [email, name] = recipient;
+        const option = document.createElement('option');
+        option.value = email;
+        option.textContent = `${name} (${email})`;
+        option.dataset.name = name;
+        select.appendChild(option);
+    });
+
+    // Auto-fill name when recipient selected
+    select.addEventListener('change', (e) => {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const nameInput = document.getElementById('addName');
+        if (selectedOption.dataset.name) {
+            nameInput.value = selectedOption.dataset.name;
+        }
+    });
+}
+
+// Show status for recipients
+function showRecipientsStatus(message, type) {
+    const statusDiv = document.getElementById('recipientsStatusMessage');
+    statusDiv.textContent = message;
+    statusDiv.className = `status-message ${type}`;
+    statusDiv.style.display = 'block';
+    setTimeout(() => {
+        statusDiv.style.display = 'none';
+    }, 5000);
+}
+
+// Open add recipient modal
+function openAddRecipientModal() {
+    document.getElementById('addRecipientModal').style.display = 'flex';
+    document.getElementById('addRecipientEmail').value = '';
+    document.getElementById('addRecipientName').value = '';
+    document.getElementById('addRecipientPassword').value = '';
+}
+
+// Close add recipient modal
+function closeAddRecipientModal() {
+    document.getElementById('addRecipientModal').style.display = 'none';
+}
+
+// Create new recipient
+async function createRecipient() {
+    const email = document.getElementById('addRecipientEmail').value.trim();
+    const name = document.getElementById('addRecipientName').value.trim();
+    const password = document.getElementById('addRecipientPassword').value;
+
+    if (!email || !name || !password) {
+        showRecipientsStatus('❌ All fields are required', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        showRecipientsStatus('❌ Password must be at least 6 characters', 'error');
+        return;
+    }
+
+    try {
+        showRecipientsStatus('⏳ Creating recipient...', 'info');
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'create_recipient',
+                email: email,
+                name: name,
+                password: password
+            })
+        });
+
+        const result = await response.text();
+        console.log('Create recipient response:', result);
+
+        if (result.includes('RECIPIENT_CREATED')) {
+            closeAddRecipientModal();
+            showRecipientsStatus('✅ Recipient created successfully!', 'success');
+            setTimeout(() => loadRecipients(), 600);
+        } else if (result.includes('already exists')) {
+            showRecipientsStatus('❌ This email is already registered', 'error');
+        } else if (result.includes('Error') || result.includes('error')) {
+            showRecipientsStatus(`❌ ${result}`, 'error');
+        } else {
+            showRecipientsStatus('❌ Failed to create recipient', 'error');
+        }
+    } catch (error) {
+        console.error('Create recipient error:', error);
+        showRecipientsStatus('❌ Error: ' + error.message, 'error');
+    }
+}
+
+// View payments for specific recipient
+function viewRecipientPayments(email) {
+    switchTab('payments');
+    const searchInput = document.getElementById('searchInput');
+    searchInput.value = email;
+    filterPayments();
+}
+
+// Delete recipient confirmation
+function deleteRecipientConfirm(email) {
+    if (confirm(`⚠️ Are you sure you want to delete recipient ${email}?\n\nThis will NOT delete their payment records.`)) {
+        deleteRecipientAccount(email);
+    }
+}
+
+// Delete recipient account
+async function deleteRecipientAccount(email) {
+    try {
+        showRecipientsStatus('⏳ Deleting recipient...', 'info');
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'delete_recipient',
+                email: email
+            })
+        });
+
+        const result = await response.text();
+        console.log('Delete recipient response:', result);
+
+        if (result.includes('DELETED')) {
+            showRecipientsStatus('✅ Recipient deleted successfully', 'success');
+            setTimeout(() => loadRecipients(), 600);
+        } else if (result.includes('NOT_FOUND')) {
+            showRecipientsStatus('⚠️ Recipient not found', 'warning');
+        } else {
+            showRecipientsStatus('❌ Delete failed: ' + result, 'error');
+        }
+    } catch (error) {
+        console.error('Delete recipient error:', error);
+        showRecipientsStatus('❌ Error: ' + error.message, 'error');
+    }
+}
+
+// Generate receipt for payment (new feature)
+function generateReceiptForPayment(receiptId) {
+    const payment = cachedPayments.find(p => String(p['Receipt No']) === String(receiptId));
+    if (!payment) {
+        showStatus('❌ Payment record not found', 'error');
+        return;
+    }
+
+    const receiptNo = payment['Receipt No'];
+    const name = payment['Name'];
+    const amount = payment['Amount'];
+    const dueAmount = payment['Due Amount'];
+    const date = payment['Date'];
+    const description = payment['Description'];
+    const email = payment['Recipient Email'];
+    const status = payment['Payment_Status'];
+    const amountPaid = payment['Amount_Paid'];
+
+    // Create receipt window
+    const receiptWindow = window.open('', '_blank', 'width=800,height=600');
+    receiptWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt ${receiptNo}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 40px;
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                .receipt-header {
+                    text-align: center;
+                    border-bottom: 3px solid #333;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }
+                .receipt-header h1 {
+                    color: #333;
+                    margin: 0;
+                    font-size: 32px;
+                }
+                .receipt-info {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    margin-bottom: 30px;
+                }
+                .info-section {
+                    background: #f9f9f9;
+                    padding: 15px;
+                    border-radius: 8px;
+                }
+                .payment-details {
+                    background: #fff;
+                    border: 2px solid #ddd;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin-bottom: 30px;
+                }
+                .payment-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 10px 0;
+                    border-bottom: 1px solid #eee;
+                }
+                .print-btn {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    padding: 12px 30px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    margin: 20px auto;
+                    display: block;
+                }
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="receipt-header">
+                <h1>PAYMENT RECEIPT</h1>
+                <p>Receipt No: <strong>#${receiptNo}</strong></p>
+                <p>Date: ${date}</p>
+            </div>
+
+            <div class="receipt-info">
+                <div class="info-section">
+                    <h3>Recipient Information</h3>
+                    <p><strong>Name:</strong> ${name}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                </div>
+                <div class="info-section">
+                    <h3>Payment Status</h3>
+                    <p><strong>${status}</strong></p>
+                    <p>Generated: ${new Date().toLocaleDateString()}</p>
+                </div>
+            </div>
+
+            <div class="payment-details">
+                <h3>Payment Details</h3>
+                ${description ? `<p>${description}</p>` : ''}
+                <div class="payment-row">
+                    <span>Total Amount:</span>
+                    <span><strong>¥${parseFloat(amount).toFixed(2)}</strong></span>
+                </div>
+                <div class="payment-row">
+                    <span>Amount Paid:</span>
+                    <span style="color: #2ecc71;"><strong>${amountPaid}</strong></span>
+                </div>
+                <div class="payment-row">
+                    <span>Due Amount:</span>
+                    <span style="color: ${parseFloat(dueAmount) > 0 ? '#e74c3c' : '#2ecc71'};"><strong>¥${parseFloat(dueAmount).toFixed(2)}</strong></span>
+                </div>
+            </div>
+
+            <button class="print-btn no-print" onclick="window.print()">🖨️ Print Receipt</button>
+
+            <div style="text-align: center; color: #999; font-size: 12px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <p>This is a computer-generated receipt.</p>
+                <p>Payment Receipt System © ${new Date().getFullYear()}</p>
+            </div>
+        </body>
+        </html>
+    `);
+    receiptWindow.document.close();
+}
