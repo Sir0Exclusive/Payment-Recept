@@ -30,7 +30,13 @@ async function loadRecipients() {
             const text = await response.text();
             throw new Error(text);
         }
-        const data = await response.json();
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (err) {
+            throw new Error(text);
+        }
         if (data && Array.isArray(data.rows)) {
             recipients = data.rows;
             displayRecipients();
@@ -153,7 +159,13 @@ async function loadPayments() {
             const text = await response.text();
             throw new Error(text);
         }
-        const data = await response.json();
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (err) {
+            throw new Error(text);
+        }
         if (data && Array.isArray(data.rows)) {
             payments = data.rows;
             displayPayments();
